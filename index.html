@@ -204,10 +204,12 @@ const num=v=>{const n=parseFloat(String(v).replace(',','.'));return isNaN(n)?0:n
 const WORK=[['home','الرئيسية'],['proj','المشروع'],['items','البنود'],['sum','الخلاصة']],GLOB=[['home','الرئيسية'],['drafts','المسودات'],['set','الإعدادات']];
 // إعداد Firebase: استبدل القيم من إعدادات مشروعك في Firebase Console.
 const FIREBASE_CONFIG={
- apiKey:'ضع_apiKey_هنا',
- authDomain:'ضع_authDomain_هنا',
- projectId:'ضع_projectId_هنا',
- storageBucket:'',messagingSenderId:'',appId:'ضع_appId_هنا'
+ apiKey:'AIzaSyAMPW0XK1PKRzHZOf1rH8s7uSnxuclulO8',
+ authDomain:'qty-construction.firebaseapp.com',
+ projectId:'qty-construction',
+ storageBucket:'qty-construction.firebasestorage.app',
+ messagingSenderId:'510782851179',
+ appId:'1:510782851179:web:0f3c684495a9f46da7492e'
 };
 let FB=null,AUTH=null,DB=null,CLOUD_USER=null,CLOUD_READY=false,SYNC_BUSY=false;
 function firebaseConfigured(){return !!(window.firebase&&FIREBASE_CONFIG.apiKey&&FIREBASE_CONFIG.projectId&&FIREBASE_CONFIG.authDomain&&FIREBASE_CONFIG.appId&&!FIREBASE_CONFIG.apiKey.startsWith('ضع_'))}
