@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="حصر الكميات">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#15181a"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>حصر الكميات | تطبيق حصر مواد البناء</title>
+<style>
+:root{box-sizing:border-box;--hdr:#212529;--navy:#0f766e;--navy2:#0d9488;--gold2:#24aea6;--gold:#0f766e;--head:#0b5f5a;--bg:#edf4f3;--card:#ffffff;--field:#ffffff;--ink:#14191c;--mut:#4a5b5f;--line:#cbdcd9;--warn:#e2f4f1;--mrow:#d3efeb;--mrowInk:#07443f;--bad:#b42318;--sh:0 4px 14px rgba(20,30,32,.10);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--hdr:#15181a;--navy:#17958b;--navy2:#24aea6;--gold2:#24aea6;--gold:#24aea6;--head:#7fded5;--bg:#101315;--card:#1b1f22;--field:#101315;--ink:#e7f2f1;--mut:#9db3b1;--line:#2c3a3c;--warn:#15302e;--mrow:#143f3b;--mrowInk:#c7f3ee;--bad:#f08a80;--sh:0 4px 14px rgba(0,0,0,.45);color-scheme:dark}}
+:root[data-theme="dark"]{--hdr:#15181a;--navy:#17958b;--navy2:#24aea6;--gold2:#24aea6;--gold:#24aea6;--head:#7fded5;--bg:#101315;--card:#1b1f22;--field:#101315;--ink:#e7f2f1;--mut:#9db3b1;--line:#2c3a3c;--warn:#15302e;--mrow:#143f3b;--mrowInk:#c7f3ee;--bad:#f08a80;--sh:0 4px 14px rgba(0,0,0,.45);color-scheme:dark}
+*{font-family:Tahoma,"Segoe UI",Arial,sans-serif}
+body{margin:0;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.7;min-height:100vh}
+header{position:sticky;top:env(safe-area-inset-top,0px);background:var(--hdr);color:#fff;z-index:5;border-bottom:3px solid var(--gold2)}
+h1{font-size:18px;margin:0;padding:12px 16px 6px;font-weight:700}
+header nav{display:flex;overflow-x:auto;gap:8px;padding:0 12px 10px}
+header nav:empty{display:none}
+header nav button{flex:none;border:1px solid rgba(255,255,255,.45);background:transparent;color:#fff;border-radius:20px;padding:6px 14px;font-size:14px}
+header nav button.on{background:var(--gold2);color:var(--navy);border-color:var(--gold2);font-weight:700}
+main{padding:14px;max-width:860px;margin:0 auto}
+main nav{display:flex;overflow-x:auto;gap:8px;margin:6px 0 12px}
+main nav button{flex:none;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:20px;padding:5px 12px 5px 10px;font-size:13px}
+main nav button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+main nav button.on .mi{background:var(--hdr)!important}
+.hero{text-align:center;padding:22px 10px 6px}
+.hero h2{margin:0 0 8px;font-size:24px;color:var(--head)}
+.hero p{margin:0;color:var(--mut);font-size:13px;line-height:1.9}
+.opts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}
+.opt{border:0;background:var(--card);border-radius:14px;padding:14px 6px;box-shadow:var(--sh);color:var(--ink);text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;min-height:140px;justify-content:center;border-top:4px solid var(--navy)}
+.opt:nth-child(2){border-top-color:var(--gold)}
+.opt:nth-child(3){border-top-color:var(--navy2)}
+.opt .ic{width:48px;height:48px;border-radius:12px;background:var(--navy);display:flex;align-items:center;justify-content:center}
+.opt:nth-child(2) .ic{background:var(--gold)}
+.opt:nth-child(3) .ic{background:var(--navy2)}
+.opt .ic svg,.mi svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.mi{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;flex:none}
+.opt b{font-size:14px;line-height:1.5}
+.opt small{color:var(--mut);font-size:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:var(--sh)}
+.card>b:first-child{display:block;font-size:16px;color:var(--head);margin-bottom:6px}
+.tools>b{color:var(--head);font-size:16px}
+.row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:6px 0}
+label{font-size:12px;color:var(--mut);display:flex;flex-direction:column;gap:3px}
+label.chk{flex-direction:row;align-items:center;color:var(--ink);font-size:14px;gap:10px;margin:8px 0;padding:9px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+input,select{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:var(--field);color:var(--ink);font-size:15px;box-sizing:border-box;outline:none}
+input:focus,select:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(38,55,106,.18)}
+input[type=checkbox]{width:18px;height:18px;accent-color:var(--navy)}
+.res{margin-top:10px;font-size:13px;background:var(--bg);border-radius:10px;padding:8px 10px;color:var(--head);font-weight:600}
+button{font-family:inherit;cursor:pointer}
+.btn,.ghost,.del{font-size:14px;border-radius:12px;padding:9px 14px}
+.btn{border:0;background:var(--navy);color:#fff;box-shadow:0 4px 12px rgba(27,37,64,.25)}
+.btn:active{transform:translateY(1px)}
+.ghost{border:1px solid var(--navy);background:var(--card);color:var(--head)}
+.del{border:1px solid #e3b7b0;background:var(--card);color:var(--bad)}
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+th{background:var(--hdr);color:#fff;padding:8px 6px;font-weight:700}
+td,th{border-bottom:1px solid var(--line);padding:8px 6px;text-align:center}
+td.r,th.r{text-align:right}
+tr.mrow td{background:var(--mrow);font-weight:700;color:var(--mrowInk)}
+.note{font-size:13px;background:var(--warn);border-radius:12px;padding:10px 12px;margin:10px 0;border-right:4px solid var(--gold)}
+.tools{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;align-items:center}
+.ok{color:var(--ok,#1e7b45)}.warn{color:var(--bad)}
+#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--hdr);color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;display:none;box-shadow:var(--sh);z-index:20}
+</style>
+</head>
+<body>
+<header><h1>حصر الكميات</h1><nav id="nav"></nav></header>
+<main id="main"></main>
+<div id="toast"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script>
+/*ENGINE*/
+const DEF={steel:7850,waste:10,lap:20,bag:0.0354,dry:1.5,dm:1.2,lean:0.1,ov:0.1,blen:0.4,
+ mixRS:'1:2:3',mixR:[1,2,3],mixPS:'1:2:4',mixP:[1,2,4],mixJS:'1:4:2',mixJ:[1,4,2],mixM:[1,3],
+ thk:1.5,paint:0.35,coats:2,adh:0.075,blk:12.5,wm:0.125,pi:3.14,dest:'download'};
+const MIX={'1:2:3':[1,2,3],'1:2:4':[1,2,4],'1.5:2:3':[1.5,2,3],'1:4:2':[1,4,2]};
+const TT=['برسلان','سراميك','موازيك'],SUB=['أرضيات','جدران','متر طولي'];
+const SZ={'أرضيات':['60x60','30x30','50x50','25x25'],'جدران':['30x60','15x60','60x120'],'متر طولي':['10','15','20']};
+const DSZ={'أرضيات':'60x60','جدران':'30x60','متر طولي':'10'};
+const DTY={'أرضيات':'برسلان','جدران':'سراميك','متر طولي':'سراميك'};
+const KC=['foot','sfoot','col','neck','beam','slab','rib'];
+const MODS=['foot','sfoot','col','neck','beam','exc','stone','bf','kur','jaam','wall','slab','rib','pl','tl','pt'];
+const MAIN=[{k:'exc',t:'أعمال الحفر والأساسات الحجرية',subs:['exc','bf','stone','kur','jaam']},
+ {k:'con',t:'أعمال الخرسانات',subs:['foot','sfoot','col','neck','beam','slab','rib']},
+ {k:'bld',t:'أعمال البناء والتشطيبات',subs:['wall','pl','pt','tl']}];
+const SF=[['B','الطول م'],['C','العرض م'],['D','الارتفاع م'],['E','العدد/طويل'],['F','الأشاير م'],['G','عدد الأسياخ'],['H','قطر الطولي مم'],['I','كانات/م'],['J','قطر الكانة مم']];
+const FF=[['n','العدد'],['A','مساحة م²'],['L','طول م'],['W','عرض م'],['P','محيط م'],['H','ارتفاع م'],['dd','خصم م²'],['ad','إضافة م²']];
+const VOL=[['B','الطول م'],['C','العرض م'],['D','الارتفاع/العمق م'],['n','العدد']];
+const RIBF=[['B','الطول م (اتجاه الأعصاب)'],['C','العرض م'],['D','الارتفاع الكلي م'],['t','سماكة الطبقة م'],['s','تباعد الأعصاب م'],['bw','عرض العصب م'],['n','العدد'],['nb','أسياخ سفلية/عصب'],['db','قطر السفلي مم'],['nt','أسياخ علوية/عصب'],['dt','قطر العلوي مم'],['ks','كانات/م للعصب'],['ds','قطر الكانة مم'],['mv','شبكة طولي/م'],['mh','شبكة عرضي/م'],['dm','قطر الشبكة مم']];
+const MOD={
+ foot:{t:'القواعد المفردة',f:[['B','الطول م'],['C','العرض م'],['D','الارتفاع م'],['E','طويل/م'],['F','قصير/م'],['G','كوابيل طويل'],['H','كوابيل قصير'],['I','قطر مم'],['J','عدد القواعد']],z:{J:1}},
+ sfoot:{t:'القواعد المشتركة',f:[['B','الطول م'],['C','العرض م'],['D','الارتفاع م'],['n','العدد'],['a','علوي طويل/م'],['b','علوي قصير/م'],['c','سفلي طويل/م'],['d','سفلي قصير/م'],['H','قطر رئيسي مم'],['G','قطر علوي قصير مم']],z:{n:1}},
+ col:{t:'الأعمدة',f:SF,z:{E:1}},
+ neck:{t:'الرقاب',f:SF,z:{E:1}},
+ beam:{t:'الجسور (الميدة)',f:[['C','العمق م'],['D','العرض م'],['E','الطول م'],['M','خصم م'],['F','قطر الطولي مم'],['G','أسياخ علوي'],['H','أسياخ سفلي'],['I','إضافي'],['L','قطر الكانة مم'],['J','كانات ركائز/م'],['K','كانات وسط/م']],z:{E:1}},
+ exc:{t:'الحفر',f:VOL,z:{n:1}},
+ stone:{t:'الأساس الحجري',f:VOL,z:{n:1}},
+ bf:{t:'الردم',f:[...VOL,['dd','خصم م³']],z:{n:1}},
+ kur:{t:'الكرسي الحجري',f:VOL,z:{n:1}},
+ jaam:{t:'الجعم',f:[...VOL,['rp','نسبة الجعم %']],z:{n:1,rp:70}},
+ wall:{t:'بناء البلك',f:[['L','الطول م'],['H','الارتفاع م'],['A','مساحة مباشرة م²'],['n','العدد'],['op','فتحات م²']],z:{n:1}},
+ slab:{t:'السقف المصمت',f:[['B','الطول م'],['C','العرض م'],['D','السماكة م'],['n','العدد'],['V','طولي/م'],['H','عرضي/م'],['G','القطر مم']],z:{n:1}},
+ rib:{t:'البلاطة الهردي (الأعصاب)',f:RIBF,z:{n:1,s:0.5,bw:0.1,t:0.05,D:0.25,nb:2,db:12,nt:2,dt:10,ks:6,ds:8,mv:5,mh:5,dm:8}},
+ pl:{t:'التلابيس الاسمنتية',f:FF,z:{n:1,tk:1.5},sel:[['tk','السماكة سم',()=>['1','1.5','2']]],g:[['pl','التلابيس م²']]},
+ tl:{t:'البلاط',f:FF,z:{n:1,ty:'برسلان',sub:'أرضيات',sz:'60x60'},sel:[['ty','النوع',()=>TT],['sub','الاستخدام',()=>SUB],['sz','المقاس سم',x=>SZ[x.sub]||SZ['أرضيات']]],g:[['tf','أرضيات م²'],['tw','جدران م²'],['tm','متر طولي م.ط']]},
+ pt:{t:'الدهانات',f:FF,z:{n:1},g:[['pt','الدهانات م²']]}
+};
+const NOTE={sfoot:'الأعداد لكل متر. السفلي الطويل يُحسب على العرض، والقصير على الطول.',beam:'التراكب يُطبَّق على الطولي. الكانات بالمحيط.',slab:'تسليح بلاطة مصمتة: الطولي والعرضي مع التراكب.',rib:'عدد الأعصاب = سقف(العرض ÷ التباعد). البلوك = الطول × (التباعد − عرض العصب).',exc:'حجم الحفر مستقل.',stone:'حجم الأساس الحجري مستقل.',bf:'الردم = الحجم − الخصم.',kur:'حجم الكرسي الحجري = الطول × العرض × الارتفاع.',jaam:'الجعم = الحجم × نسبته. الباقي خرسانة بنسبة الخلط المختارة.',wall:'الطوب والملاط حسب الإعدادات.',pl:'اختر السماكة لكل بند.',tl:'الاستخدام: أرضيات أو جدران بالمتر المربع، أو متر طولي (الطول أو المحيط، والمقاس = ارتفاع الشريط بالسم).',pt:'الدهان بالكيلوغرام حسب الإعدادات.'};
+const RL={plain:'عادية م³',rein:'مسلحة م³',steel:'حديد صافي طن',exc:'حفر م³',stone:'أساس حجري م³',back:'ردم م³',kur:'كرسي م³',jaam:'جعم م³',jcon:'خرسانة الجعم م³',area:'م²',vol:'حجم م³',lin:'م.ط'};
+let S=clone(DEF),D={},CUR={v:'home',m:null,s:null,pid:null,fin:false,started:false};
+function clone(o){return JSON.parse(JSON.stringify(o))}
+function blank(){const o={gf:{},proj:{name:'',type:'حساب كميات من مخططات',owner:'',engineer:'',start:'',mains:{exc:true,con:true,bld:true}},px:{}};MODS.forEach(k=>o[k]=[]);['pl','pt','tf','tw','tm'].forEach(g=>o.gf[g]={d:0,a:0});return o}
+const up=x=>Math.ceil(x-1e-9);
+const WF=()=>1+S.waste/100,LF=()=>1+S.lap/100;
+const w=d=>d*d*S.pi*S.steel/4/1e9;
+const ta=s=>{const[a,b]=s.split('x').map(Number);return a*b/1e4};
+function mix(v,dry,r){const t=r[0]+r[1]+r[2],f=dry*WF()/t,B=S.bag;return{c:up(v*f*r[0]/B),s:up(v*f*r[1]),g:up(v*f*r[2])}}
+function fbase(x){return x.A>0?x.A:(x.L*x.W>0?x.L*x.W:x.P*x.H)}
+function fitem(x){return Math.max(0,fbase(x)*(x.n||1)-(x.dd||0)+(x.ad||0))}
+function calc(k,x){const r={plain:0,rein:0,steel:0};
+ switch(k){
+ case 'foot':{const B=x.B,C=x.C,h=x.D,E=x.E,F=x.F,G=x.G,H=x.H,I=x.I,J=x.J;
+  r.plain=(B+2*S.ov)*(C+2*S.ov)*S.lean*J;r.rein=B*C*h*J;
+  r.steel=((2*h+B)*E*C+(2*h+C)*F*B+(3*B+2*h)*G+(3*C+2*h)*H)*J*w(I);break}
+ case 'sfoot':{const B=x.B,C=x.C,h=x.D,n=x.n;
+  r.plain=(B+2*S.ov)*(C+2*S.ov)*S.lean*n;r.rein=B*C*h*n;
+  r.steel=n*((x.c*C*B+x.d*B*C+x.a*C*B)*w(x.H)+x.b*B*C*w(x.G));break}
+ case 'col':case 'neck':{const B=x.B,C=x.C,h=x.D,E=x.E;
+  r.rein=B*C*h*E;r.steel=E*(x.F+h)*x.G*w(x.H)+2*(B+C)*h*x.I*E*w(x.J);break}
+ case 'beam':{const Hd=x.C,W=x.D,Ln=x.E,Ded=x.M,n=Hd*W*(Ln-Ded);
+  r.rein=n;r.steel=Ln*(x.G+x.I+x.H)*LF()*w(x.F)+2*(W+Hd)*(x.K*(Ln-Ded)*.5+x.J*(Ln-Ded)*.5)*w(x.L);break}
+ case 'exc':r.exc=x.B*x.C*x.D*x.n;break;
+ case 'stone':r.stone=x.B*x.C*x.D*x.n;break;
+ case 'bf':r.back=Math.max(0,x.B*x.C*x.D*x.n-(x.dd||0));break;
+ case 'kur':r.kur=x.B*x.C*x.D*x.n;break;
+ case 'jaam':{const v=x.B*x.C*x.D*x.n;r.jaam=v*x.rp/100;r.jcon=v*(100-x.rp)/100;break}
+ case 'wall':r.area=Math.max(0,(x.A>0?x.A:x.L*x.H)*x.n-(x.op||0));break;
+ case 'slab':r.rein=x.B*x.C*x.D*x.n;r.steel=(x.V*x.C*x.B+x.H*x.B*x.C)*x.n*w(x.G)*LF();break;
+ case 'rib':{const L=x.B,n=x.n,hr=x.D-x.t,sp=Math.max(x.s,0.01),N=Math.ceil(x.C/sp),lf=LF();
+  r.rein=(N*x.bw*hr*L+x.C*L*x.t)*n;
+  r.steel=n*(N*(x.nb*w(x.db)+x.nt*w(x.dt))*L*lf+N*x.ks*L*2*(x.bw+hr)*w(x.ds)+(x.mv+x.mh)*L*x.C*w(x.dm)*lf);
+  r.blk=Math.ceil(Math.max(0,L*x.C-N*x.bw*L)*WF()/(S.blen*Math.max(0.01,sp-x.bw)))*n;break}
+ case 'pl':r.area=fitem(x);r.vol=r.area*(x.tk||1.5)/100;break;
+ case 'pt':r.area=fitem(x);break;
+ case 'tl':if(x.sub==='متر طولي')r.lin=Math.max(0,(x.L||x.P||0)*(x.n||1)-(x.dd||0)+(x.ad||0));else r.area=fitem(x);break;
+ }return r}
+function sumK(ks,f){let s=0;ks.forEach(k=>(D[k]||[]).forEach(x=>s+=calc(k,x)[f]||0));return s}
+function ms(k){const r={plain:0,rein:0,steel:0,exc:0,stone:0,back:0,kur:0,jaam:0,jcon:0,blk:0,area:0};(D[k]||[]).forEach(x=>{const c=calc(k,x);for(const f in r)r[f]+=c[f]||0});return r}
+function totals(){const T={};
+ T.P=sumK(KC,'plain');T.R=sumK(KC,'rein');T.ST=sumK(KC,'steel');T.STW=T.ST*WF();
+ T.mp=mix(T.P,S.dry,S.mixP);T.mr=mix(T.R,S.dry,S.mixR);
+ T.jc=sumK(['jaam'],'jcon');T.mj=mix(T.jc,S.dry,S.mixJ);T.jr=sumK(['jaam'],'jaam')*WF();
+ T.exc=sumK(['exc'],'exc');T.back=sumK(['bf'],'back');T.stone=sumK(['stone'],'stone')*WF();
+ T.wall=sumK(['wall'],'area');T.blk=up(T.wall*S.blk*WF())+sumK(['rib'],'blk');
+ T.wm=up(T.wall*S.wm*WF());T.wms=up(T.wm*S.bag*3);
+ const gp=D.gf.pl.a-D.gf.pl.d;
+ T.pa=Math.max(0,sumK(['pl'],'area')+gp);T.pv=Math.max(0,sumK(['pl'],'vol')+gp*S.thk/100);
+ T.pl=mix(T.pv,S.dm,[S.mixM[0],S.mixM[1],0]);
+ T.pta=Math.max(0,sumK(['pt'],'area')+D.gf.pt.a-D.gf.pt.d);T.kg=up(T.pta*S.paint*S.coats*WF());
+ const G={};
+ (D.tl||[]).forEach(x=>{const c=calc('tl',x),k=x.sub+'|'+x.ty+'|'+x.sz,o=G[k]||(G[k]={sub:x.sub,ty:x.ty,sz:x.sz,q:0});o.q+=x.sub==='متر طولي'?c.lin:c.area});
+ const AD={'أرضيات':'tf','جدران':'tw','متر طولي':'tm'};
+ SUB.forEach(s=>{const g=D.gf[AD[s]],a=g.a-g.d;if(a){const k=s+'|'+DTY[s]+'|'+DSZ[s];const o=G[k]||(G[k]={sub:s,ty:DTY[s],sz:DSZ[s],q:0});o.q+=a}});
+ T.tg=Object.values(G).filter(o=>o.q>0).map(o=>{const L=o.sub==='متر طولي';return{l:o.sub+' '+o.ty+' '+o.sz,sub:o.sub,ty:o.ty,L,m:L?o.q:0,n:L?up(o.q*WF()*100)/100:up(o.q*WF()/ta(o.sz)),a:L?o.q*parseFloat(o.sz)/100:o.q}});
+ T.tarea=T.tg.reduce((a,o)=>a+o.a,0);
+ const ab=up(T.tarea*WF()*S.adh);T.adh={c:ab,s:up(ab*S.bag*3)};
+ return T}
+function lines(k,T){const M=ms(k),W=WF(),o=[],L=(d,u,q)=>o.push({l:d,u,q,key:MOD[k].t+' | '+d});
+ switch(k){
+ case 'foot':case 'sfoot':L('خرسانة عادية','م³',M.plain);L('خرسانة مسلحة','م³',M.rein);L('حديد تسليح (شامل الهدر)','طن',M.steel*W);break;
+ case 'col':case 'neck':case 'beam':case 'slab':L('خرسانة مسلحة','م³',M.rein);L('حديد تسليح (شامل الهدر)','طن',M.steel*W);break;
+ case 'rib':L('خرسانة مسلحة (أعصاب وطبقة)','م³',M.rein);L('حديد تسليح (شامل الهدر)','طن',M.steel*W);L('بلوك هردي (شامل الهدر)','حبة',M.blk);break;
+ case 'exc':L('حفر','م³',M.exc);break;
+ case 'bf':L('ردم','م³',M.back);break;
+ case 'stone':L('أساس حجري','م³',M.stone);break;
+ case 'kur':L('كرسي حجري','م³',M.kur);break;
+ case 'jaam':L('جعم (حجر)','م³',M.jaam);L('خرسانة الجعم','م³',M.jcon);break;
+ case 'wall':L('بناء جدران بلك','م²',M.area);L('بلك (شامل الهدر)','حبة',up(M.area*S.blk*W));break;
+ case 'pl':{const G={};D.pl.forEach(x=>{const q=String(x.tk||1.5);G[q]=(G[q]||0)+calc('pl',x).area});const a=D.gf.pl.a-D.gf.pl.d,q=String(S.thk);G[q]=(G[q]||0)+a;Object.entries(G).filter(([q,v])=>v>0).forEach(([q,v])=>L('تلابيس سماكة '+q+' سم','م²',v));break}
+ case 'pt':L('دهان ('+S.coats+' أوجه)','م²',T.pta);break;
+ case 'tl':T.tg.forEach(g=>L(g.l,g.L?'م.ط':'م²',g.L?g.m:g.a));break;
+ }return o.filter(x=>x.q>0)}
+function boq(){const T=totals(),R=[];let G=0,mi=0;
+ MAIN.forEach(m=>{if(!D.proj.mains[m.k])return;mi++;R.push({t:'main',n:mi,l:m.t});let st=0,c=0;
+  m.subs.forEach(s=>{const L=lines(s,T);if(!L.length)return;R.push({t:'sub',l:MOD[s].t});
+   L.forEach(x=>{const p=D.px[x.key]||0,amt=x.q*p;st+=amt;R.push({t:'line',n:mi+'.'+(++c),l:x.l,u:x.u,q:x.q,p,key:x.key,amt})})});
+  R.push({t:'tot',l:'إجمالي '+m.t,amt:st});G+=st});
+ R.push({t:'grand',l:'الإجمالي العام',amt:G});return R}
+function matsRows(T){return[['أسمنت (الخلطات والملاط والجدران)','كيس',T.mp.c+T.mr.c+T.mj.c+T.pl.c+T.adh.c+T.wm],['رمل','م³',T.mp.s+T.mr.s+T.mj.s+T.pl.s+T.adh.s+T.wms],['كري','م³',T.mp.g+T.mr.g+T.mj.g],['بلك (شامل الهدر)','حبة',T.blk],['الحديد (شامل الهدر)','طن',T.STW],['دهان','كجم',T.kg],['بلاط (مع الهدر)','م²',T.tarea*WF()]]}
+/*END*/
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const f0=v=>Math.round(+v||0),f2=v=>(+v||0).toFixed(2),f3=v=>(+v||0).toFixed(3);
+const num=v=>{const n=parseFloat(String(v).replace(',','.'));return isNaN(n)?0:n};
+const WORK=[['home','الرئيسية'],['proj','المشروع'],['items','البنود'],['sum','الخلاصة']],GLOB=[['home','الرئيسية'],['drafts','المسودات'],['set','الإعدادات']];
+// إعداد Firebase: استبدل القيم من إعدادات مشروعك في Firebase Console.
+const FIREBASE_CONFIG={
+ apiKey:'ضع_apiKey_هنا',
+ authDomain:'ضع_authDomain_هنا',
+ projectId:'ضع_projectId_هنا',
+ storageBucket:'',messagingSenderId:'',appId:'ضع_appId_هنا'
+};
+let FB=null,AUTH=null,DB=null,CLOUD_USER=null,CLOUD_READY=false,SYNC_BUSY=false;
+function firebaseConfigured(){return !!(window.firebase&&FIREBASE_CONFIG.apiKey&&FIREBASE_CONFIG.projectId&&FIREBASE_CONFIG.authDomain&&FIREBASE_CONFIG.appId&&!FIREBASE_CONFIG.apiKey.startsWith('ضع_'))}
+function initCloud(){
+ if(!firebaseConfigured())return false;
+ try{FB=window.firebase;if(!FB.apps.length)FB.initializeApp(FIREBASE_CONFIG);AUTH=FB.auth();DB=FB.firestore();CLOUD_READY=true;
+  AUTH.onAuthStateChanged(async user=>{CLOUD_USER=user||null;render();if(user){await syncCloud(true);toast('تم تسجيل الدخول');}});
+  AUTH.getRedirectResult().catch(()=>{});return true;
+ }catch(e){console.error(e);return false}
+}
+function cloudCard(){
+ if(!firebaseConfigured())return `<div class="card"><b>المزامنة السحابية</b><p class="note">تسجيل الدخول جاهز للربط، لكن يلزم إدخال إعدادات مشروع Firebase أولاً. راجع دليل الربط المرفق.</p><p class="note">حالة البيانات: محفوظة محلياً على هذا الجهاز.</p></div>`;
+ if(!CLOUD_USER)return `<div class="card"><b>حسابك والمزامنة السحابية</b><p class="note">يمكنك استخدام التطبيق دون تسجيل الدخول. سجّل الدخول لمزامنة المشاريع بين أجهزتك.</p><label>البريد الإلكتروني<input id="authEmail" type="email" autocomplete="email" placeholder="name@example.com"></label><label>كلمة المرور<input id="authPass" type="password" autocomplete="current-password" placeholder="6 أحرف على الأقل"></label><div class="tools"><button class="btn" data-auth="login">دخول بالبريد</button><button class="ghost" data-auth="signup">إنشاء حساب</button><button class="ghost" data-auth="google">الدخول عبر Google</button></div><small id="authMsg" class="note">تحتاج إلى اتصال بالإنترنت لتسجيل الدخول والمزامنة.</small></div>`;
+ return `<div class="card"><b>الحساب والمزامنة</b><p>تم تسجيل الدخول: <b>${esc(CLOUD_USER.email||'حساب Google')}</b></p><p class="note" id="syncState">${navigator.onLine?'الحساب متصل؛ يمكن مزامنة المشاريع.':'أنت دون اتصال؛ ستبقى التعديلات محفوظة محلياً.'}</p><div class="tools"><button class="btn" data-cloud-sync="1">مزامنة الآن</button><button class="ghost" data-auth="logout">تسجيل الخروج</button></div></div>`;
+}
+async function authAction(kind){
+ if(!CLOUD_READY){toast('إعداد Firebase غير مكتمل؛ راجع دليل الربط');return}
+ try{
+  if(kind==='logout'){await AUTH.signOut();toast('تم تسجيل الخروج');return}
+  if(kind==='google'){const provider=new FB.auth.GoogleAuthProvider();try{await AUTH.signInWithPopup(provider)}catch(e){if(['auth/popup-blocked','auth/popup-closed-by-user','auth/cancelled-popup-request'].includes(e.code))await AUTH.signInWithRedirect(provider);else throw e}return}
+  const email=($('#authEmail')?.value||'').trim(),pass=$('#authPass')?.value||'';
+  if(!email||pass.length<6){toast('أدخل بريداً صحيحاً وكلمة مرور من 6 أحرف على الأقل');return}
+  if(kind==='signup')await AUTH.createUserWithEmailAndPassword(email,pass);else await AUTH.signInWithEmailAndPassword(email,pass);
+ }catch(e){const m=({ 'auth/email-already-in-use':'البريد مستخدم مسبقاً','auth/invalid-email':'البريد الإلكتروني غير صحيح','auth/weak-password':'كلمة المرور ضعيفة','auth/user-not-found':'لا يوجد حساب بهذا البريد','auth/wrong-password':'كلمة المرور غير صحيحة','auth/invalid-credential':'بيانات الدخول غير صحيحة','auth/network-request-failed':'تحقق من اتصال الإنترنت','auth/unauthorized-domain':'أضف نطاق الموقع إلى Authorized domains في Firebase' })[e.code]||('تعذر تسجيل الدخول: '+e.message);toast(m);const el=$('#authMsg');if(el)el.textContent=m}
+}
+function recTime(r){const t=Number(r.updatedAt||0);if(t)return t;const d=Date.parse(r.updated||'');return Number.isFinite(d)?d:0}
+async function syncCloud(showToast=false){
+ if(!CLOUD_USER||!DB||!navigator.onLine||SYNC_BUSY)return;
+ SYNC_BUSY=true;const uid=CLOUD_USER.uid;
+ try{
+  const ref=DB.collection('users').doc(uid).collection('projects');
+  const snap=await ref.get();const remote=new Map();snap.forEach(doc=>remote.set(doc.id,{...doc.data(),id:doc.id}));
+  const local=loadDrafts(),merged=new Map();
+  // Merge by project ID; the newest revision wins. Local copies remain available offline.
+  for(const [id,r] of remote)merged.set(id,r);
+  for(const r of local){const old=merged.get(r.id);if(!old||recTime(r)>recTime(old))merged.set(r.id,r)}
+  const batch=DB.batch();let writes=0;
+  for(const [id,r] of merged){const old=remote.get(id);if(!old||recTime(r)>recTime(old)){batch.set(ref.doc(id),{...r,ownerUid:uid,updatedAt:recTime(r)||Date.now()},{merge:true});writes++}}
+  if(writes)await batch.commit();
+  const mergedList=[...merged.values()].sort((a,b)=>recTime(a)-recTime(b));saveDrafts(mergedList);
+  if(showToast)toast('اكتملت المزامنة: '+mergedList.length+' مشروع');
+  if(CUR.v==='drafts'||CUR.v==='home')render();
+ }catch(e){console.error(e);if(showToast)toast('تعذرت المزامنة؛ بياناتك المحلية لم تتأثر')}
+ finally{SYNC_BUSY=false}
+}
+
+function toast(m){const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',2600)}
+function save(){try{localStorage.setItem('qty-v2',JSON.stringify({D}));localStorage.setItem('qty-v3',JSON.stringify({S}))}catch(e){}}
+function restore(){let d=null,s=null;try{d=JSON.parse(localStorage.getItem('qty-v2')||'null');s=JSON.parse(localStorage.getItem('qty-v3')||'null')}catch(e){}
+ D=blank();const o=(d&&d.D)||{};MODS.forEach(k=>D[k]=o[k]||[]);Object.assign(D.gf,o.gf||{});
+ if(o.gf){D.gf.tf=o.gf.fl||D.gf.tf;D.gf.tw=o.gf.wl||D.gf.tw}
+ if(o.proj)D.proj=Object.assign(D.proj,o.proj,{mains:Object.assign({exc:true,con:true,bld:true},(o.proj&&o.proj.mains)||{})});
+ D.px=o.px||{};
+ (o.fin||[]).forEach(x=>{if(x.pl)D.pl.push(Object.assign({},x,{tk:x.tk||1.5}));if(x.pt)D.pt.push(Object.assign({},x));
+  if(x.fl)D.tl.push(Object.assign({},x,{ty:x.ft||'برسلان',sub:'أرضيات',sz:x.fs||'60x60'}));
+  if(x.wl)D.tl.push(Object.assign({},x,{ty:x.wt||'سراميك',sub:'جدران',sz:x.ws||'30x60'}))});
+ S=Object.assign(clone(DEF),(s&&s.S)||{})}
+function newItem(k){const o={name:''};MOD[k].f.forEach(([q])=>o[q]=0);Object.assign(o,MOD[k].z||{});return o}
+function nav(){let T=[];if(CUR.v==='home'){$('#nav').innerHTML='';return}
+ if(['proj','items','sum'].includes(CUR.v))T=[['home','الرئيسية'],['proj','المشروع']].concat(CUR.started?[['items','البنود'],['sum','الخلاصة']]:[]);
+ else T=[['home','الرئيسية'],['drafts','المسودات'],['set','الإعدادات']];
+ $('#nav').innerHTML=T.map(([k,t])=>`<button data-tab="${k}" class="${k===CUR.v?'on':''}">${t}</button>`).join('')}
+function cardHead(k,i,x){return `<div class=row><input data-name="1" data-m="${k}" data-i="${i}" value="${esc(x.name)}" placeholder="اسم البند" style="flex:1"><button class=del data-act=del data-m="${k}" data-i="${i}">حذف</button></div>`}
+function fields(k,i,x){return `<div class=grid>${MOD[k].f.map(([q,lab])=>`<label>${lab}<input type=number inputmode=decimal step=any data-m="${k}" data-i="${i}" data-f="${q}" value="${x[q]??0}"></label>`).join('')}</div>`}
+function selHTML(k,i,x){const ss=(MOD[k].sel||[]).map(([q,l,op])=>`<label>${l}<select data-m="${k}" data-i="${i}" data-k="${q}">${op(x).map(v=>`<option value="${v}" ${String(v)===String(x[q])?'selected':''}>${v}</option>`).join('')}</select></label>`).join('');return ss?`<div class=grid>${ss}</div>`:''}
+function gadjHTML(k){return `<div class=card><b>خصم وإضافة إجمالي</b><table><tr><th>البند</th><th>خصم</th><th>إضافة</th></tr>${MOD[k].g.map(([g,l])=>`<tr><td>${l}</td><td><input type=number step=any data-g="${g}.d" value="${D.gf[g].d}"></td><td><input type=number step=any data-g="${g}.a" value="${D.gf[g].a}"></td></tr>`).join('')}</table></div>`}
+function modHTML(k){let h=`<div class=tools>${icon(k)}<b>${MOD[k].t}</b><button class=btn data-act=add data-m="${k}">+ بند جديد</button></div>`;
+ if(NOTE[k])h+=`<div class=note>${NOTE[k]}</div>`;
+ if(MOD[k].g)h+=gadjHTML(k);
+ if(!D[k].length)h+='<p class=note>لا توجد بنود.</p>';
+ D[k].forEach((x,i)=>h+=`<div class=card>${cardHead(k,i,x)}${fields(k,i,x)}${selHTML(k,i,x)}<div class=res id="r-${k}-${i}"></div></div>`);
+ return h}
+function resTxt(k,x){return Object.entries(calc(k,x)).filter(([a,b])=>b).map(([a,b])=>`${RL[a]||a} ${f3(b)}`).join(' · ')}
+function updRes(){MODS.forEach(k=>D[k].forEach((x,i)=>{const el=$('#r-'+k+'-'+i);if(el)el.textContent=resTxt(k,x)}))}
+function projHTML(){const P=D.proj;
+ return `<div class=card><b>بيانات المشروع</b><div class=grid>
+ <label>اسم المشروع<input data-pj="name" value="${esc(P.name)}"></label>
+ <label>نوع المشروع<select data-pj="type">${['حساب كميات من مخططات','حصر موقع'].map(o=>`<option ${o===P.type?'selected':''}>${o}</option>`).join('')}</select></label>
+ <label>مالك المشروع<input data-pj="owner" value="${esc(P.owner)}"></label>
+ <label>مهندس الحصر<input data-pj="engineer" value="${esc(P.engineer||'')}"></label>
+ <label>تاريخ بدء العمل<input type=date data-pj="start" value="${P.start}"></label></div></div>
+ <div class=card><b>بنود الحصر</b>${MAIN.map(m=>`<label class=chk><input type=checkbox data-mn="${m.k}" ${P.mains[m.k]?'checked':''}>${m.t}</label>`).join('')}</div>
+ <div class=tools><button class=btn data-go=1>الحصر ←</button></div>`}
+function mainSumHTML(m,T){return '<table>'+m.subs.map(s=>lines(s,T).map(x=>`<tr><td class=r>${MOD[s].t}</td><td class=r>${x.l}</td><td>${f2(x.q)} ${x.u}</td></tr>`).join('')).join('')+'</table>'}
+function itemsHTML(){const sel=MAIN.filter(m=>D.proj.mains[m.k]);
+ if(!sel.length)return '<p class=note>لم تختر بنود الحصر. ارجع إلى "المشروع" واختر البنود.</p>';
+ if(!CUR.m)return sel.map(m=>`<div class=card><div class=tools>${icon(m.k,MAINI)}<b>${m.t}</b></div><p>${m.subs.map(s=>MOD[s].t).join(' · ')}</p><button class=btn data-open="${m.k}">فتح البند</button></div>`).join('');
+ const m=MAIN.find(x=>x.k===CUR.m);if(!CUR.s||!m.subs.includes(CUR.s))CUR.s=m.subs[0];
+ return `<div class=tools><button class=ghost data-back=1>← البنود</button><b>${m.t}</b></div><nav>${m.subs.map(s=>`<button data-sub="${s}" class="${s===CUR.s?'on':''}">${icon(s)}${MOD[s].t}</button>`).join('')}</nav>`
+ +modHTML(CUR.s)+`<div class=card><b>خلاصة ${m.t}</b>${mainSumHTML(m,totals())}</div>`}
+function boqHTML(ro){const R=boq();let h='<table><tr><th>الرقم</th><th>البند</th><th>الوحدة</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th></tr>';
+ R.forEach((r,i)=>{
+  if(r.t==='main')h+=`<tr class=mrow><td>${r.n}</td><td colspan=5 class=r>${r.l}</td></tr>`;
+  else if(r.t==='sub')h+=`<tr><td></td><td colspan=5 class=r><i>${r.l}</i></td></tr>`;
+  else if(r.t==='line')h+=`<tr><td>${r.n}</td><td class=r>${r.l}</td><td>${r.u}</td><td>${f2(r.q)}</td><td>${ro?r.p:`<input type=number step=any data-px="${i}" value="${r.p}" style="width:80px">`}</td><td id="a${i}">${f0(r.amt)}</td></tr>`;
+  else h+=`<tr><th colspan=5 class=r>${r.l}</th><th id="a${i}">${f0(r.amt)}</th></tr>`});
+ return h+'</table>'}
+function updPx(){if(CUR.v!=='sum')return;boq().forEach((r,i)=>{if(r.amt!==undefined){const e=$('#a'+i);if(e)e.textContent=f0(r.amt)}})}
+function checksHTML(T){const c=[];let inc=0;MODS.forEach(k=>D[k].forEach(x=>{if(!Object.values(calc(k,x)).some(v=>v>0))inc++}));
+ c.push([inc?'warn':'ok','بنود بلا أبعاد كافية: '+inc]);
+ const st=T.R>0?T.ST*1000/T.R:0;c.push([st&&(st<40||st>250)?'warn':'ok','حديد لكل م³ مسلح: '+f0(st)+' كجم (المعتاد 40 إلى 250)']);
+ const cm=T.R>0?T.mr.c/T.R:0;c.push([cm&&(cm<4||cm>12)?'warn':'ok','أسمنت لكل م³ مسلح: '+f2(cm)+' كيس (المعتاد 4 إلى 12)']);
+ const bj=(D.jaam||[]).filter(x=>x.rp<0||x.rp>100).length;c.push([bj?'warn':'ok','نسبة الجعم خارج 0 إلى 100%: '+bj+' بند']);
+ return c.map(([s,t])=>`<div class=${s}>${s==='ok'?'✔':'⚠'} ${t}</div>`).join('')}
+function matsHTML(T){return '<table><tr><th>المادة</th><th>الوحدة</th><th>الكمية</th></tr>'+matsRows(T).map(([l,u,q])=>`<tr><td>${l}</td><td>${u}</td><td>${f2(q)}</td></tr>`).join('')+'</table>'}
+function sumHTML(){const T=totals(),P=D.proj;
+ const fin=CUR.fin?`<div class=card><b>إنهاء المشروع</b>${destSel()}<div class=tools><button class=btn data-save=d>حفظ كمسودة</button><button class=btn data-save=x>حفظ كمسودة وتصدير Excel</button><button class=btn data-save=p>حفظ كمسودة وتصدير PDF</button><button class=ghost data-fin=0>رجوع</button></div></div>`:'';
+ return `<div class=card><b>${esc(P.name)||'مشروع بدون اسم'}</b><p>${P.type} · المهندس: ${esc(P.engineer||'')} · المالك: ${esc(P.owner)} · البدء: ${P.start}</p></div>`
+ +'<div class=card><b>جدول الكميات</b>'+boqHTML(false)+'</div>'
+ +'<div class=card><b>المواد</b>'+matsHTML(T)+'</div>'
+ +'<div class=card><b>فحص التكامل</b>'+checksHTML(T)+'</div>'
+ +fin+'<div class=tools>'+(CUR.fin?'':'<button class=btn data-fin=1>إنهاء المشروع</button>')+'<button class=ghost id=xl>تصدير Excel</button><button class=ghost id=pd>تصدير PDF</button></div>'}
+function setHTML(){const n=(q,l)=>`<label>${l}<input type=number step=any data-s="${q}" value="${S[q]}"></label>`;
+ const sl=(k,l)=>{const c=S['mix'+k+'S'];return `<label>${l}<select data-mx="${k}">${[...Object.keys(MIX),'أدخل نسبة'].map(o=>`<option ${o===c?'selected':''}>${o}</option>`).join('')}</select></label>`};
+ const cu=(q,ls)=>`<div class=grid>${ls.map((l,i)=>`<label>${l}<input type=number step=any data-s="${q}.${i}" value="${S[q][i]}"></label>`).join('')}</div>`;
+ const mx=k=>S['mix'+k+'S']==='أدخل نسبة'?cu('mix'+k,['أسمنت','رمل','كري']):'';
+ return `<div class=note>تُطبَّق هذه الإعدادات على كل المشاريع.</div><div class=card><b>مكان الحفظ الافتراضي</b>${destSel()}</div><div class=card><b>الخرسانة والحديد</b><div class=grid>${n('waste','الهدر %')}${n('lap','التراكب % (الطولي والبلاطات)')}${n('steel','كثافة الحديد كجم/م³')}${n('dry','جفاف الخرسانة')}${n('bag','حجم كيس الأسمنت م³')}${n('lean','سماكة العادية م')}${n('ov','زيادة العادية لكل جانب م')}${n('blen','طول بلوكة الأعصاب م')}</div>
+ <div class=grid>${sl('R','نسبة المسلحة')}${sl('P','نسبة العادية')}${sl('J','نسبة خرسانة الجعم')}</div>${mx('R')}${mx('P')}${mx('J')}</div>
+ <div class=card><b>التلابيس والدهان والبلاط والجدران</b><div class=grid>${n('thk','خصم/إضافة اللياسة الإجمالي سم')}${n('dm','جفاف ملاط اللياسة')}${n('paint','دهان كجم/م² للوجه')}${n('coats','عدد الأوجه')}${n('adh','ملاط البلاط كيس/م²')}${n('blk','بلك حبة/م²')}${n('wm','ملاط الجدران كيس/م²')}</div><p>نسبة ملاط اللياسة (أسمنت:رمل):</p>${cu('mixM',['أسمنت','رمل'])}</div>
+ <div class=tools><button class=ghost id=df>إعادة الافتراضات</button></div>`}
+function render(){nav();const V={home:homeHTML,drafts:draftsHTML,set:setHTML,proj:projHTML,items:itemsHTML,sum:sumHTML};$('#main').innerHTML=V[CUR.v]();updRes();updPx()}
+const DESTS=[['download','الهاتف (مجلد التنزيلات)'],['pick','اختيار مكان محدد على الجهاز'],['share','Google Drive أو تطبيق آخر (مشاركة)']];
+function destSel(){return `<label>مكان الحفظ<select data-dest=1>${DESTS.map(([v,l])=>`<option value="${v}" ${v===(S.dest||'download')?'selected':''}>${l}</option>`).join('')}</select></label>`}
+async function saveBlob(blob,name){const dest=S.dest||'download';let fb=false;
+ try{
+  if(dest==='share'&&navigator.canShare){const file=new File([blob],name,{type:blob.type});if(navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name});toast('تمت المشاركة');return}fb=true}
+  else if(dest==='pick'&&window.showSaveFilePicker){const hd=await showSaveFilePicker({suggestedName:name});const wr=await hd.createWritable();await wr.write(blob);await wr.close();toast('تم الحفظ في المكان المحدد');return}
+ }catch(e){if(e&&e.name==='AbortError'){toast('أُلغي الحفظ');return}fb=true}
+ const cl=window.claude;
+ if(!cl){const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1000);toast(fb?'الخيار المحدد غير متاح هنا، تم التنزيل إلى الهاتف':'تم التنزيل إلى الهاتف');return}
+ const dl=await cl.use('downloads');if(!dl){toast('التصدير غير متاح في هذه النسخة');return}
+ try{await dl.save({filename:name,data:blob});toast('تم تجهيز الملف')}catch(err){toast(err&&err.code==='declined'?'أُلغي الحفظ':'تعذّر الحفظ')}}
+async function exportXlsx(){const P=D.proj,R=boq(),T=totals(),wb=XLSX.utils.book_new();
+ const A=[['اسم المشروع',P.name],['نوع المشروع',P.type],['مهندس الحصر',P.engineer||''],['المالك',P.owner],['تاريخ البدء',P.start],[],['الرقم','البند','الوحدة','الكمية','سعر الوحدة','الإجمالي']],F=[],tots=[];let ms0=0;
+ R.forEach(r=>{const i=A.length;
+  if(r.t==='main'){A.push([r.n,r.l,'','','','']);ms0=i}
+  else if(r.t==='sub')A.push(['',r.l,'','','','']);
+  else if(r.t==='line'){A.push([r.n,r.l,r.u,+r.q.toFixed(3),r.p,0]);F.push({r:i,c:5,f:`D${i+1}*E${i+1}`,v:r.amt})}
+  else if(r.t==='tot'){A.push(['',r.l,'','','',0]);F.push({r:i,c:5,f:`SUM(F${ms0+2}:F${i})`,v:r.amt});tots.push('F'+(i+1))}
+  else{A.push(['',r.l,'','','',0]);F.push({r:i,c:5,f:'SUM('+tots.join(',')+')',v:r.amt})}});
+ const ws=XLSX.utils.aoa_to_sheet(A);
+ F.forEach(({r,c,f,v})=>{ws[XLSX.utils.encode_cell({r,c})]={t:'n',v,f}});
+ ws['!cols']=[{wch:6},{wch:46},{wch:8},{wch:12},{wch:12},{wch:14}];ws['!views']=[{RTL:true}];
+ XLSX.utils.book_append_sheet(wb,ws,'جدول الكميات');
+ const wm=XLSX.utils.aoa_to_sheet([['المادة','الوحدة','الكمية'],...matsRows(T)]);wm['!views']=[{RTL:true}];XLSX.utils.book_append_sheet(wb,wm,'المواد');
+ ['foot','sfoot','col','neck','beam','slab','rib','exc','stone','bf','kur','jaam','wall','pl','tl','pt'].forEach(k=>{const s=XLSX.utils.aoa_to_sheet([['الاسم',...MOD[k].f.map(f=>f[1]),...(MOD[k].sel||[]).map(x=>x[1]),'النتائج'],...D[k].map(x=>[x.name,...MOD[k].f.map(([q])=>x[q]??0),...(MOD[k].sel||[]).map(([q])=>x[q]),resTxt(k,x)])]);s['!views']=[{RTL:true}];XLSX.utils.book_append_sheet(wb,s,MOD[k].t)});
+ wb.Workbook={CalcPr:{fullCalcOnLoad:true}};
+ await saveBlob(new Blob([XLSX.write(wb,{bookType:'xlsx',type:'array'})],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),'حصر-الكميات.xlsx');
+}
+async function exportPdf(){
+ if(typeof html2pdf==='undefined'){toast('مكتبة PDF غير محمّلة');return}
+ const T=totals(),el=document.createElement('div'),P=D.proj;
+ el.innerHTML=`<h2>تقرير حصر الكميات</h2><p>${esc(P.name)} · ${P.type} · المهندس: ${esc(P.engineer||'')} · المالك: ${esc(P.owner)} · البدء: ${P.start}</p><div class=card><b>جدول الكميات</b>${boqHTML(true)}</div><div class=card><b>المواد</b>${matsHTML(T)}</div><div class=card><b>فحص التكامل</b>${checksHTML(T)}</div>`;
+ el.dir='rtl';
+ el.style.cssText='position:absolute;top:0;left:0;width:700px;padding:12px;background:#fff;color:#000;font-family:Tahoma,Arial,sans-serif;font-size:12px;z-index:-1';
+ el.querySelectorAll('.card').forEach(c=>c.style.cssText='background:#fff;color:#000;border:1px solid #bbb;border-radius:6px;padding:6px;margin-bottom:8px');
+ document.body.appendChild(el);
+ try{const blob=await html2pdf().set({margin:8,filename:'حصر-الكميات.pdf',image:{type:'jpeg',quality:0.95},html2canvas:{scale:2,backgroundColor:'#ffffff'},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}).from(el).outputPdf('blob');await saveBlob(blob,'حصر-الكميات.pdf')}
+ catch(err){toast('تعذّر إنشاء PDF')}
+ finally{el.remove()}
+}
+const PATH={dig:'<path d="M12 4v12M7 11l5 5 5-5M5 20h14"/>',stone:'<circle cx="8" cy="9" r="3"/><circle cx="16" cy="10" r="2.5"/><circle cx="12" cy="16" r="3"/>',box:'<rect x="4" y="6" width="16" height="12" rx="1"/><path d="M4 12h16"/>',col:'<rect x="9" y="3" width="6" height="18"/>',beam:'<rect x="3" y="9" width="18" height="6"/>',rib:'<path d="M5 6v12M9 6v12M13 6v12M17 6v12M4 18h16"/>',wall:'<rect x="3" y="5" width="18" height="14"/><path d="M3 10h18M3 15h18M9 5v5M15 10v5M9 15v4"/>',layer:'<path d="M3 8l9-4 9 4-9 4zM3 13l9 4 9-4"/>',brush:'<rect x="4" y="4" width="12" height="5" rx="1"/><path d="M16 6h4v8h-7v4"/>',tile:'<rect x="4" y="4" width="7" height="7"/><rect x="13" y="4" width="7" height="7"/><rect x="4" y="13" width="7" height="7"/><rect x="13" y="13" width="7" height="7"/>'};
+const MI={exc:['dig','#134e4a'],bf:['dig','#115e59'],stone:['stone','#475569'],kur:['stone','#334155'],jaam:['stone','#0e7490'],foot:['box','#0f766e'],sfoot:['box','#0d7377'],col:['col','#155e75'],neck:['col','#1e6f78'],beam:['beam','#212529'],slab:['box','#3f4a57'],rib:['rib','#0f5f66'],wall:['wall','#0b6b78'],pl:['layer','#2e6b66'],pt:['brush','#0f766e'],tl:['tile','#18706b']};
+const MAINI={exc:['dig','#134e4a'],con:['box','#0f766e'],bld:['wall','#212529']};
+function icon(k,map){const [p,c]=(map||MI)[k];return `<span class=mi style="background:${c}"><svg viewBox="0 0 24 24">${PATH[p]}</svg></span>`}
+function homeHTML(){const ic={plus:'<path d="M12 5v14M5 12h14"/>',folder:'<path d="M3 7h6l2 2h10v9H3z"/>',gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>'};
+ const svg=p=>`<svg viewBox="0 0 24 24">${p}</svg>`;
+ return `<div class=hero><img alt="" src="icon-512.png" style="width:120px;height:120px;border-radius:26px;box-shadow:0 10px 26px rgba(20,30,32,.28)"><h2>جدول حصر الكميات</h2><p>هذا التطبيق تم برمجته من قبل المهندس يونس السياسة عبر الذكاء الإصطناعي كلود</p></div>${cloudCard()}
+ <div class=opts>
+  <button class=opt data-new=1><span class=ic>${svg(ic.plus)}</span><b>مشروع جديد</b></button>
+  <button class=opt data-tab=drafts><span class=ic>${svg(ic.folder)}</span><b>استعراض المشاريع (المسودات المحفوظة)</b><small>${loadDrafts().length} مسودة</small></button>
+  <button class=opt data-tab=set><span class=ic>${svg(ic.gear)}</span><b>الإعدادات العامة</b></button>
+ </div>`}
+function loadDrafts(){try{return JSON.parse(localStorage.getItem('qty-drafts')||'[]')}catch(e){return[]}}
+function saveDrafts(L){try{localStorage.setItem('qty-drafts',JSON.stringify(L))}catch(e){}}
+function draftsHTML(){const L=loadDrafts();
+ const imp='<label class=ghost style="display:inline-block;cursor:pointer">استيراد مسودة من ملف<input type=file accept=".json,application/json" data-imp=1 style="display:none"></label>';
+ const head=cloudCard()+`<div class=tools><button class=btn data-new=1>مشروع جديد</button>${imp}</div>`;
+ if(!L.length)return head+'<p class=note>لا توجد مسودات محفوظة بعد.</p>';
+ return head+L.slice().reverse().map(r=>`<div class=card><b>${esc(r.name)}</b><p>${esc(r.type)}${r.engineer?' · المهندس: '+esc(r.engineer):''} · آخر حفظ: ${r.updated}</p><div class=tools><button class=btn data-open-draft="${r.id}">فتح واستعراض</button><button class=ghost data-dl-draft="${r.id}">تنزيل ملف المسودة</button><button class=del data-del-draft="${r.id}">حذف</button></div></div>`).join('')}
+function newProject(){D=blank();CUR={v:'proj',m:null,s:null,pid:null,fin:false,started:false};save();render()}
+function openDraft(id){const r=loadDrafts().find(x=>x.id===id);if(!r)return;D=Object.assign(blank(),clone(r.D));D.proj=Object.assign(blank().proj,D.proj);CUR={v:'items',m:null,s:null,pid:id,fin:false,started:true};save();render()}
+function delDraft(id){if(!confirm('حذف هذه المسودة؟'))return;saveDrafts(loadDrafts().filter(x=>x.id!==id));render()}
+function mkRec(id){const P=D.proj;return{id,name:P.name,type:P.type,owner:P.owner,engineer:P.engineer||'',start:P.start,updated:new Date().toISOString().slice(0,10),updatedAt:Date.now(),D:clone(D)}}
+function saveDraft(kind){if(!D.proj.name){toast('أدخل اسم المشروع أولاً');CUR.v='proj';render();return}
+ const L=loadDrafts(),id=CUR.pid||('p'+Date.now()),rec=mkRec(id);const i=L.findIndex(x=>x.id===id);if(i>=0)L[i]=rec;else L.push(rec);
+ saveDrafts(L);CUR.pid=id;CUR.fin=false;CUR.started=true;save();
+ if(CLOUD_USER&&navigator.onLine)syncCloud(false);
+ if(kind==='x')exportXlsx();if(kind==='p')exportPdf();
+ toast('تم حفظ المسودة');CUR.v='drafts';render()}
+function dlDraft(id){const r=loadDrafts().find(x=>x.id===id);if(!r)return;saveBlob(new Blob([JSON.stringify(r)],{type:'application/json'}),r.name.replace(/[\\/:*?"<>|]/g,'-')+'.json')}
+async function importDraft(f){if(!f)return;try{const r=JSON.parse(await f.text());if(!r||!r.D)throw 0;const L=loadDrafts();r.id='p'+Date.now();r.updated=new Date().toISOString().slice(0,10);L.push(r);saveDrafts(L);toast('تم استيراد المسودة');render()}catch(e){toast('الملف غير صالح')}}
+document.body.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)return;
+ if(t.dataset.tab){CUR.v=t.dataset.tab;render();return}
+ if(t.dataset.auth){authAction(t.dataset.auth);return}
+ if(t.dataset.cloudSync){syncCloud(true);return}
+ if(t.dataset.new){newProject();return}
+ if(t.dataset.openDraft!==undefined){openDraft(t.dataset.openDraft);return}
+ if(t.dataset.delDraft!==undefined){delDraft(t.dataset.delDraft);return}
+ if(t.dataset.dlDraft!==undefined){dlDraft(t.dataset.dlDraft);return}
+ if(t.dataset.save){saveDraft(t.dataset.save);return}
+ if(t.dataset.fin!==undefined){CUR.fin=t.dataset.fin==='1';render();return}
+ if(t.dataset.go){CUR.started=true;CUR.v='items';render();return}
+ if(t.dataset.open){CUR.m=t.dataset.open;CUR.s=null;render();return}
+ if(t.dataset.back){CUR.m=null;render();return}
+ if(t.dataset.sub){CUR.s=t.dataset.sub;render();return}
+ if(t.dataset.act==='add'){D[t.dataset.m].push(newItem(t.dataset.m));save();render();return}
+ if(t.dataset.act==='del'){D[t.dataset.m].splice(+t.dataset.i,1);save();render();return}
+ if(t.id==='xl'){exportXlsx();return}
+ if(t.id==='pd'){exportPdf();return}
+ if(t.id==='df'){S=clone(DEF);save();render();return}
+ if(t.id==='cl'){if(confirm('حذف كل البنود؟')){const P=D.proj,g=D.gf,px=D.px;D=blank();D.proj=P;D.gf=g;D.px=px;save();render()}return}
+});
+function setProj(t){D.proj[t.dataset.pj]=t.value;save()}
+document.body.addEventListener('change',e=>{const t=e.target;
+ if(t.dataset.pj){setProj(t);return}
+ if(t.dataset.mn){D.proj.mains[t.dataset.mn]=t.checked;save();return}
+ if(t.dataset.dest){S.dest=t.value;save();return}
+ if(t.dataset.imp){importDraft(t.files[0]);t.value='';return}
+ if(t.dataset.mx){const k=t.dataset.mx,v=t.value;S['mix'+k+'S']=v;if(MIX[v])S['mix'+k]=clone(MIX[v]);save();render();return}
+ if(t.dataset.k){const x=D[t.dataset.m][+t.dataset.i];const q=t.dataset.k;x[q]=q==='tk'?num(t.value):t.value;if(q==='sub')x.sz=DSZ[t.value];save();render()}
+});
+document.body.addEventListener('input',e=>{const t=e.target;
+ if(t.dataset.pj){setProj(t);return}
+ if(t.dataset.f!==undefined){D[t.dataset.m][+t.dataset.i][t.dataset.f]=num(t.value);save();updRes();return}
+ if(t.dataset.name!==undefined){D[t.dataset.m][+t.dataset.i].name=t.value;save();return}
+ if(t.dataset.g){const[g,f]=t.dataset.g.split('.');D.gf[g][f]=num(t.value);save();return}
+ if(t.dataset.s){const p=t.dataset.s.split('.'),v=num(t.value);if(p.length===1)S[p[0]]=v;else S[p[0]][+p[1]]=v;save();return}
+ if(t.dataset.px!==undefined){const r=boq()[+t.dataset.px];if(r&&r.key){D.px[r.key]=num(t.value);save();updPx()}}
+});
+restore();initCloud();render();
+window.addEventListener('online',()=>{if(CLOUD_USER)syncCloud(true)});
+if('serviceWorker' in navigator&&location.protocol==='https:'){navigator.serviceWorker.register('sw.js').catch(()=>{})}
+</script>
+</body>
+</html>

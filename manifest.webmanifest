@@ -1,0 +1,37 @@
+{
+  "name": "حصر الكميات – مواد البناء والحديد",
+  "short_name": "حصر الكميات",
+  "description": "تطبيق لحصر كميات مواد البناء والخرسانة والحديد والتشطيبات وإعداد جداول الكميات.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#15181a",
+  "theme_color": "#15181a",
+  "lang": "ar",
+  "dir": "rtl",
+  "categories": [
+    "productivity",
+    "utilities"
+  ],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
