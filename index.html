@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="حصر الكميات">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#15181a"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>حصر الكميات | تطبيق حصر مواد البناء</title>
+<title>حصر كميات QOB</title>
 <style>
 :root{box-sizing:border-box;--hdr:#212529;--navy:#0f766e;--navy2:#0d9488;--gold2:#24aea6;--gold:#0f766e;--head:#0b5f5a;--bg:#edf4f3;--card:#ffffff;--field:#ffffff;--ink:#14191c;--mut:#4a5b5f;--line:#cbdcd9;--warn:#e2f4f1;--mrow:#d3efeb;--mrowInk:#07443f;--bad:#b42318;--sh:0 4px 14px rgba(20,30,32,.10);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--hdr:#15181a;--navy:#17958b;--navy2:#24aea6;--gold2:#24aea6;--gold:#24aea6;--head:#7fded5;--bg:#101315;--card:#1b1f22;--field:#101315;--ink:#e7f2f1;--mut:#9db3b1;--line:#2c3a3c;--warn:#15302e;--mrow:#143f3b;--mrowInk:#c7f3ee;--bad:#f08a80;--sh:0 4px 14px rgba(0,0,0,.45);color-scheme:dark}}
@@ -66,10 +66,12 @@ tr.mrow td{background:var(--mrow);font-weight:700;color:var(--mrowInk)}
 .tools{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;align-items:center}
 .ok{color:var(--ok,#1e7b45)}.warn{color:var(--bad)}
 #toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--hdr);color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;display:none;box-shadow:var(--sh);z-index:20}
+.tag{display:inline-block;background:#d3efeb;color:#07443f;border-radius:8px;padding:0 8px;font-size:11px;margin-inline-start:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}.chips button{padding:6px 10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;cursor:pointer}.chips button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
 </style>
 </head>
 <body>
-<header><h1>حصر الكميات</h1><nav id="nav"></nav></header>
+<header><h1>حصر كميات QOB</h1><nav id="nav"></nav></header>
 <main id="main"></main>
 <div id="toast"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -79,7 +81,7 @@ tr.mrow td{background:var(--mrow);font-weight:700;color:var(--mrowInk)}
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script>
 /*ENGINE*/
-const DEF={steel:7850,waste:10,lap:20,bag:0.0354,dry:1.5,dm:1.2,lean:0.1,ov:0.1,blen:0.4,
+const DEF={wst:2.5,screed:0.05,steel:7850,waste:10,lap:20,bag:0.0354,dry:1.5,dm:1.2,lean:0.1,ov:0.1,blen:0.4,
  mixRS:'1:2:3',mixR:[1,2,3],mixPS:'1:2:4',mixP:[1,2,4],mixJS:'1:4:2',mixJ:[1,4,2],mixM:[1,3],
  thk:1.5,paint:0.35,coats:2,adh:0.075,blk:12.5,wm:0.125,pi:3.14,dest:'download'};
 const MIX={'1:2:3':[1,2,3],'1:2:4':[1,2,4],'1.5:2:3':[1.5,2,3],'1:4:2':[1,4,2]};
@@ -87,11 +89,12 @@ const TT=['برسلان','سراميك','موازيك'],SUB=['أرضيات','ج�
 const SZ={'أرضيات':['60x60','30x30','50x50','25x25'],'جدران':['30x60','15x60','60x120'],'متر طولي':['10','15','20']};
 const DSZ={'أرضيات':'60x60','جدران':'30x60','متر طولي':'10'};
 const DTY={'أرضيات':'برسلان','جدران':'سراميك','متر طولي':'سراميك'};
-const KC=['foot','sfoot','col','neck','beam','slab','rib'];
-const MODS=['foot','sfoot','col','neck','beam','exc','stone','bf','kur','jaam','wall','slab','rib','pl','tl','pt'];
-const MAIN=[{k:'exc',t:'أعمال الحفر والأساسات الحجرية',subs:['exc','bf','stone','kur','jaam']},
- {k:'con',t:'أعمال الخرسانات',subs:['foot','sfoot','col','neck','beam','slab','rib']},
- {k:'bld',t:'أعمال البناء والتشطيبات',subs:['wall','pl','pt','tl']}];
+const KC=['foot','sfoot','sh','col','neck','beam','slab','rib','rib2'];
+const MODS=['foot','sfoot','sh','raft','col','neck','beam','slab','sbeam','rib','rib2','exc','bf','kur','jaam','wall','stwall','ext','rasif','rm','skirt','op'];
+const PDEF=()=>({dig:{on:false,h:1},ded:{fp:false,fr:false,nk:false,bm:false,rp:false,rr:false},extWin:false,extDedM:0,wdx:{pw:false,pdw:false,tw:false}});
+const RT=['برسلان','سراميك','موازيك'],RSF=['60x60','30x30','50x50','25x25'],RSW=['30x60','15x60','60x120'];
+const MAIN=[{k:'mHfr',t:'الحفر والردم',subs:['exc','bf']},{k:'mBld',t:'بنود البناء',subs:['kur','jaam','wall','stwall']},{k:'mCon',t:'أعمال الخرسانات',subs:['gFound','beam','gCol','gSlab']},{k:'mExt',t:'التشطيبات الخارجية',subs:['ext','rasif']},{k:'mInt',t:'التشطيبات الداخلية',subs:['rm','fpw','fpc','fdw','fdc','ftf','ftw','fsc','fsk']},{k:'mOpn',t:'النوافذ والأبواب',subs:['op']}];
+const DEF_MAINS=()=>{const o={};MAIN.forEach(m=>o[m.k]=true);return o};
 const SF=[['B','الطول م'],['C','العرض م'],['D','الارتفاع م'],['E','العدد/طويل'],['F','الأشاير م'],['G','عدد الأسياخ'],['H','قطر الطولي مم'],['I','كانات/م'],['J','قطر الكانة مم']];
 const FF=[['n','العدد'],['A','مساحة م²'],['L','طول م'],['W','عرض م'],['P','محيط م'],['H','ارتفاع م'],['dd','خصم م²'],['ad','إضافة م²']];
 const VOL=[['B','الطول م'],['C','العرض م'],['D','الارتفاع/العمق م'],['n','العدد']];
@@ -103,7 +106,6 @@ const MOD={
  neck:{t:'الرقاب',f:SF,z:{E:1}},
  beam:{t:'الجسور (الميدة)',f:[['C','العمق م'],['D','العرض م'],['E','الطول م'],['M','خصم م'],['F','قطر الطولي مم'],['G','أسياخ علوي'],['H','أسياخ سفلي'],['I','إضافي'],['L','قطر الكانة مم'],['J','كانات ركائز/م'],['K','كانات وسط/م']],z:{E:1}},
  exc:{t:'الحفر',f:VOL,z:{n:1}},
- stone:{t:'الأساس الحجري',f:VOL,z:{n:1}},
  bf:{t:'الردم',f:[...VOL,['dd','خصم م³']],z:{n:1}},
  kur:{t:'الكرسي الحجري',f:VOL,z:{n:1}},
  jaam:{t:'الجعم',f:[...VOL,['rp','نسبة الجعم %']],z:{n:1,rp:70}},
@@ -112,13 +114,16 @@ const MOD={
  rib:{t:'البلاطة الهردي (الأعصاب)',f:RIBF,z:{n:1,s:0.5,bw:0.1,t:0.05,D:0.25,nb:2,db:12,nt:2,dt:10,ks:6,ds:8,mv:5,mh:5,dm:8}},
  pl:{t:'التلابيس الاسمنتية',f:FF,z:{n:1,tk:1.5},sel:[['tk','السماكة سم',()=>['1','1.5','2']]],g:[['pl','التلابيس م²']]},
  tl:{t:'البلاط',f:FF,z:{n:1,ty:'برسلان',sub:'أرضيات',sz:'60x60'},sel:[['ty','النوع',()=>TT],['sub','الاستخدام',()=>SUB],['sz','المقاس سم',x=>SZ[x.sub]||SZ['أرضيات']]],g:[['tf','أرضيات م²'],['tw','جدران م²'],['tm','متر طولي م.ط']]},
+ stwall:{t:'بناء الحجر',f:[['L','الطول م'],['H','الارتفاع م'],['T','السماكة م'],['A','مساحة مباشرة م²'],['n','العدد'],['op','فتحات م²']],z:{n:1}},
+ skirt:{t:'النعلة',f:[['L','الطول م'],['n','العدد'],['H','ارتفاع النعلة سم']],z:{n:1,H:10}},
+ op:{t:'النوافذ والأبواب',f:[['W','العرض م'],['H','الارتفاع م'],['n','العدد']],z:{n:1},sel:[['ty','النوع',()=>['نافذة','باب']]]},
  pt:{t:'الدهانات',f:FF,z:{n:1},g:[['pt','الدهانات م²']]}
 };
-const NOTE={sfoot:'الأعداد لكل متر. السفلي الطويل يُحسب على العرض، والقصير على الطول.',beam:'التراكب يُطبَّق على الطولي. الكانات بالمحيط.',slab:'تسليح بلاطة مصمتة: الطولي والعرضي مع التراكب.',rib:'عدد الأعصاب = سقف(العرض ÷ التباعد). البلوك = الطول × (التباعد − عرض العصب).',exc:'حجم الحفر مستقل.',stone:'حجم الأساس الحجري مستقل.',bf:'الردم = الحجم − الخصم.',kur:'حجم الكرسي الحجري = الطول × العرض × الارتفاع.',jaam:'الجعم = الحجم × نسبته. الباقي خرسانة بنسبة الخلط المختارة.',wall:'الطوب والملاط حسب الإعدادات.',pl:'اختر السماكة لكل بند.',tl:'الاستخدام: أرضيات أو جدران بالمتر المربع، أو متر طولي (الطول أو المحيط، والمقاس = ارتفاع الشريط بالسم).',pt:'الدهان بالكيلوغرام حسب الإعدادات.'};
-const RL={plain:'عادية م³',rein:'مسلحة م³',steel:'حديد صافي طن',exc:'حفر م³',stone:'أساس حجري م³',back:'ردم م³',kur:'كرسي م³',jaam:'جعم م³',jcon:'خرسانة الجعم م³',area:'م²',vol:'حجم م³',lin:'م.ط'};
+const NOTE={sfoot:'الأعداد لكل متر. السفلي الطويل يُحسب على العرض، والقصير على الطول.',beam:'التراكب يُطبَّق على الطولي. الكانات بالمحيط.',slab:'تسليح بلاطة مصمتة: الطولي والعرضي مع التراكب.',rib:'عدد الأعصاب = سقف(العرض ÷ التباعد). البلوك = الطول × (التباعد − عرض العصب).',exc:'حفر القواعد = (الخرسانة العادية ÷ سماكة الخرسانة العادية) × ارتفاع الحفر، وحفر يدوي اختياري.',stwall:'بناء الحجر: المساحة = الطول × الارتفاع − الفتحات، والحجم = المساحة × السماكة. الملاط غير مضاف بعد.',skirt:'النعلة بالمتر الطولي = الطول × العدد.',op:'عدد النوافذ والأبواب ومساحتها. لم تُخصم من الجدران بعد.',bf:'الردم = الحفر الكلي − الخصومات المؤكدة.',kur:'حجم الكرسي الحجري = الطول × العرض × الارتفاع.',jaam:'الجعم = الحجم × نسبته. الباقي خرسانة بنسبة الخلط المختارة.',wall:'الطوب والملاط حسب الإعدادات.',pl:'اختر السماكة لكل بند.',tl:'الاستخدام: أرضيات أو جدران بالمتر المربع، أو متر طولي (الطول أو المحيط، والمقاس = ارتفاع الشريط بالسم).',pt:'الدهان بالكيلوغرام حسب الإعدادات.'};
+const RL={plain:'عادية م³',rein:'مسلحة م³',steel:'حديد صافي طن',exc:'حفر م³',cnt:'عدد',back:'ردم م³',kur:'كرسي م³',jaam:'جعم م³',jcon:'خرسانة الجعم م³',area:'م²',vol:'حجم م³',lin:'م.ط'};
 let S=clone(DEF),D={},CUR={v:'home',m:null,s:null,pid:null,fin:false,started:false};
 function clone(o){return JSON.parse(JSON.stringify(o))}
-function blank(){const o={gf:{},proj:{name:'',type:'حساب كميات من مخططات',owner:'',engineer:'',start:'',mains:{exc:true,con:true,bld:true}},px:{}};MODS.forEach(k=>o[k]=[]);['pl','pt','tf','tw','tm'].forEach(g=>o.gf[g]={d:0,a:0});return o}
+function blank(){const o=Object.assign({gf:{},proj:{name:'',type:'',owner:'',engineer:'',start:'',mains:DEF_MAINS()},px:{}},PDEF());MODS.forEach(k=>o[k]=[]);return o}
 const up=x=>Math.ceil(x-1e-9);
 const WF=()=>1+S.waste/100,LF=()=>1+S.lap/100;
 const w=d=>d*d*S.pi*S.steel/4/1e9;
@@ -126,7 +131,82 @@ const ta=s=>{const[a,b]=s.split('x').map(Number);return a*b/1e4};
 function mix(v,dry,r){const t=r[0]+r[1]+r[2],f=dry*WF()/t,B=S.bag;return{c:up(v*f*r[0]/B),s:up(v*f*r[1]),g:up(v*f*r[2])}}
 function fbase(x){return x.A>0?x.A:(x.L*x.W>0?x.L*x.W:x.P*x.H)}
 function fitem(x){return Math.max(0,fbase(x)*(x.n||1)-(x.dd||0)+(x.ad||0))}
-function calc(k,x){const r={plain:0,rein:0,steel:0};
+
+const SHF_N=[['B','الطول م'],['C','العرض م'],['D','الارتفاع م'],['n','العدد'],['Gt','علوي (عدد)'],['Gb','سفلي (عدد)'],['dt','قطر العلوي مم'],['db','قطر السفلي مم'],['ks','كانات/م'],['ds','قطر الكانة مم']];
+const BEAMF_N=[['L','الطول م'],['b','العرض م'],['H','الارتفاع الكلي م (مع البلاطة)'],['t','سمك البلاطة م'],['n','العدد'],['Gt','علوي (عدد)'],['Gb','سفلي (عدد)'],['dt','قطر العلوي مم'],['db','قطر السفلي مم'],['ks','كانات/م'],['ds','قطر الكانة مم']];
+const HBF_N=[['L','الطول م'],['b','العرض م'],['D','سمك البلاطة الهوردي م'],['n','العدد'],['Gt','علوي (عدد)'],['Gb','سفلي (عدد)'],['dt','قطر العلوي مم'],['db','قطر السفلي مم'],['ks','كانات/م'],['ds','قطر الكانة مم']];
+const SLABF_N=[['B','الطول م'],['C','العرض م'],['D','السماكة م'],['n','العدد'],['V','طولي/م'],['H','عرضي/م'],['G','القطر مم']];
+const RIBF_N=[['B','الطول م (اتجاه الأعصاب)'],['C','العرض م'],['D','الارتفاع الكلي م'],['t','سماكة الطبقة م'],['s','تباعد الأعصاب م'],['bw','عرض العصب م'],['n','العدد'],['nb','أسياخ سفلية/عصب'],['db','قطر السفلي مم'],['nt','أسياخ علوية/عصب'],['dt','قطر العلوي مم'],['ks','كانات/م للعصب'],['ds','قطر الكانة مم'],['mv','شبكة طولي/م'],['mh','شبكة عرضي/م'],['dm','قطر الشبكة مم']];
+const RIB2F_N=[['B','الطول م'],['C','العرض م'],['D','الارتفاع الكلي م'],['t','سماكة الطبقة م'],['sx','تباعد الأعصاب (على B) م'],['sy','تباعد الأعصاب (على C) م'],['bw','عرض العصب م'],['n','العدد'],['nb','أسياخ سفلية/عصب'],['db','قطر السفلي مم'],['nt','أسياخ علوية/عصب'],['dt','قطر العلوي مم'],['ks','كانات/م للعصب'],['ds','قطر الكانة مم'],['mv','شبكة طولي/م'],['mh','شبكة عرضي/م'],['dm','قطر الشبكة مم']];
+Object.assign(MOD,{
+ sh:{t:'الشدادات (جسور تربط القواعد)',f:SHF_N,z:{n:1}},
+ slab:{t:'البلاطة المصمتة',f:SLABF_N,z:{n:1}},
+ sbeam:{t:'جسور البلاطة المصمتة (ساقطة)',f:BEAMF_N,z:{n:1,t:0.2}},
+ rib:{t:'البلاطة الهوردي باتجاه واحد',f:RIBF_N,z:{n:1,s:0.5,bw:0.1,t:0.05,D:0.25,nb:2,db:12,nt:2,dt:10,ks:6,ds:8,mv:5,mh:5,dm:8}},
+ hb1:{t:'جسور البلاطة الهوردي (اتجاه واحد)',f:HBF_N,z:{n:1,D:0.25,Gt:2,Gb:2,dt:12,db:16,ks:6,ds:8}},
+ rib2:{t:'البلاطة الهوردي باتجاهين',f:RIB2F_N,z:{n:1,sx:0.5,sy:0.5,bw:0.1,t:0.05,D:0.25,nb:2,db:12,nt:2,dt:10,ks:6,ds:8,mv:5,mh:5,dm:8}},
+ hb2:{t:'جسور البلاطة الهوردي (اتجاهين)',f:HBF_N,z:{n:1,D:0.25,Gt:2,Gb:2,dt:12,db:16,ks:6,ds:8}},
+ ext:{t:'التشطيبات الخارجية',f:[['n','العدد'],['A','مساحة مباشرة م²'],['P','المحيط م'],['H','الارتفاع م']],z:{n:1,pl:true,pt:true}},
+ rasif:{t:'الرصيف',f:[['L','الطول م'],['W','العرض م'],['n','العدد']],z:{n:1,u:'م.ط'},sel:[['u','الوحدة',()=>['م.ط','م²']]]},
+ rm:{t:'الغرف الداخلية',f:[['n','العدد'],['L','الطول م'],['W','العرض م'],['H','الارتفاع م'],['P','المحيط م (اختياري)'],['A','مساحة الأرضية م² (اختياري)'],['dd','خصم فتحات الجدران م²']],z:{n:1},sel:[['ft','بلاط الأرضية',()=>RT],['fs','مقاس الأرضية سم',()=>RSF],['wt','بلاط الجدران',()=>RT],['ws','مقاس الجدران سم',()=>RSW]]},
+ skirt:{t:'النعلة',f:[['L','طول النعلة م (المحيط)'],['n','العدد'],['dw','خصم عرض الأبواب م'],['H','ارتفاع النعلة سم']],z:{n:1,H:10}},
+ op:{t:MOD.op.t,f:MOD.op.f,z:{n:1,ty:'نافذة'},sel:MOD.op.sel}
+});
+Object.assign(MOD.beam,{t:'الميدة (جسور تربط الرقاب)'});
+delete MOD.pl; delete MOD.pt; delete MOD.tl;
+Object.assign(MOD,{sbeam:{t:'جسور البلاطات (عادية وهردي)',f:[['C','العمق م (العادية: يشمل البلاطة)'],['D','العرض م'],['E','الطول م'],['M','خصم م'],['F','قطر الطولي مم'],['G','أسياخ علوي'],['H','أسياخ سفلي'],['I','أسياخ مكسحة (إضافية)'],['L','قطر الكانة مم'],['J','كانات ركائز/م'],['K','كانات وسط/م'],['t','سمك البلاطة م (للعادية)'],['n','العدد']],z:{n:1,t:0.2,ty:'عادية'},sel:[['ty','النوع',()=>['عادية','هردي باتجاه واحد','هردي باتجاهين']]]}});
+Object.assign(MOD,{
+ raft:{t:'الحصيرة (اللبشة)',f:[['B','الطول م'],['C','العرض م'],['D','السماكة م'],['n','العدد'],['bx','سفلي/م في اتجاه الطول'],['by','سفلي/م في اتجاه العرض'],['tx','علوي/م في اتجاه الطول'],['ty','علوي/م في اتجاه العرض'],['db','قطر السفلي مم'],['dt','قطر العلوي مم']],z:{n:1,bx:5,by:5,tx:0,ty:0,db:16,dt:12}},
+ gFound:{t:'خرسانة الأساسات',f:[],z:{}},
+ gCol:{t:'خرسانة الأعمدة والرقاب',f:[],z:{}},
+ gSlab:{t:'خرسانة السقوف',f:[],z:{}}
+});
+MOD.sh.t='الشدادات';MOD.beam.t='الميدة';MOD.sbeam.t='الجسور للبلاطات';MOD.rib.t='الهردي باتجاه واحد';MOD.rib2.t='الهردي باتجاهين';
+Object.assign(MOD,{
+ rm:{t:'بند الغرف',f:[['n','العدد'],['L','الطول م'],['W','العرض م'],['H','الارتفاع م'],['P','المحيط م (اختياري)'],['A','مساحة الأرضية م² (اختياري)']],z:{n:1}},
+ fpw:{t:'تلابيس الجدران الداخلية',f:[],z:{}}, fpc:{t:'تلابيس السقوف الداخلية',f:[],z:{}},
+ fdw:{t:'دهان الجدران الداخلية',f:[],z:{}}, fdc:{t:'دهان السقوف الداخلية',f:[],z:{}},
+ ftf:{t:'بلاط الأرضيات',f:[],z:{}}, ftw:{t:'بلاط الجدران',f:[],z:{}},
+ fsc:{t:'صبة الأرضيات',f:[],z:{}}, fsk:{t:'النعلة',f:[],z:{}},
+ raft:MOD.raft
+});
+NOTE.beam='الأسياخ المكسحة تُحسب بطول مائل إضافي.';
+NOTE.rm='أدخل أبعاد الغرفة، ثم أشّر التشطيبات التي تنطبق عليها. كل تشطيب يظهر بنفسه في بنده، ويمكن فيه إضافة خصم أو تعديل خاص بالصف.';
+Object.assign(NOTE,{sbeam:'جسور البلاطات: نفس معادلات الميدة. العادية: العمق يشمل سمك البلاطة، والمساحة تُخصم من البلاطة. الهوردي: العمق = سمك البلاطة الهوردي.'});
+Object.assign(NOTE,{
+ sh:'جسور تربط القواعد ببعضها. الخرسانة العادية تحتها = الطول × (العرض + 0.2) × السماكة × العدد.',
+ beam:'الأسياخ المكسحة تُحسب بطول مائل إضافي.',
+ slab:'البلاطة المصمتة بصافي المساحة بين الجسور. الجسور تُدخل داخل البلاطة.',
+ sbeam:'جسور ساقطة في البلاطة المصمتة. الارتفاع الكلي يشمل سمك البلاطة.',
+ rib:'البلاطة الهوردي باتجاه واحد بصافي المساحة بين الجسور.',
+ hb1:'جسور البلاطة الهوردي بسمك البلاطة الهوردي وعرض مختلف.',
+ rib2:'البلاطة الهوردي باتجاهين بصافي المساحة بين الجسور.',
+ hb2:'جسور البلاطة الهوردي بسمك البلاطة الهوردي وعرض مختلف.',
+ ext:'التشطيبات الخارجية بالمساحة فقط. اختر التلابيس والرشة من الخيارات.',
+ rasif:'الرصيف يقبل المتر الطولي أو المتر المربع حسب الوحدة المختارة.',
+ rm:'الغرف الداخلية: أدخل الأبعاد، ثم اختر التشطيبات التي تضاف إليها.',
+ skirt:'النعلة بالمتر الطولي = (المحيط − عرض الأبواب) × العدد.'
+});
+Object.assign(RL,{cnt:'عدد',lin:'م.ط',vol:'حجم م³',area:'مساحة م²',pl:'تلابيس م²',pt:'دهان م²'});
+
+function bmFoot(x){return x.D*(x.E-x.M)*(x.n||1)}
+function bmRein(x){return x.C*x.D*(x.E-x.M)*(x.n||1)}
+function bmSteel(x){const Ln=x.E-x.M,n=x.n||1;return n*(Ln*(x.G+x.H)*LF()*w(x.F)+x.I*(Ln+0.828*x.C)*w(x.F)+2*(x.D+x.C)*(x.K*Ln*0.5+x.J*Ln*0.5)*w(x.L))}
+function calc(k,x){const LX=LF();
+ switch(k){
+ case 'beam':{const Ln=x.E-x.M,C=x.C,Dd=x.D;return{plain:0,rein:C*Dd*Ln,steel:Ln*(x.G+x.H)*LX*w(x.F)+x.I*(Ln+0.828*C)*w(x.F)+2*(Dd+C)*(x.K*Ln*0.5+x.J*Ln*0.5)*w(x.L)}}
+ case 'sh':{const B=x.B,C=x.C,h=x.D,n=x.n;return{plain:B*(C+2*S.ov)*S.lean*n,rein:B*C*h*n,steel:n*(B*LX*(x.Gt*w(x.dt)+x.Gb*w(x.db))+x.ks*B*2*(C+h)*w(x.ds))}}
+ case 'slab':case 'rib':case 'rib2':return{plain:0,rein:x.B*x.C*x.D*x.n,steel:0};
+ case 'sbeam':return{plain:0,rein:bmRein(x),steel:bmSteel(x)};
+ case 'hb1':case 'hb2':return{plain:0,rein:x.b*x.L*x.D*x.n,steel:x.n*(x.L*LX*(x.Gt*w(x.dt)+x.Gb*w(x.db))+x.ks*x.L*2*(x.b+x.D)*w(x.ds))};
+ case 'ext':{const b=(x.A>0?x.A:x.P*x.H)*x.n;return{plain:0,rein:0,steel:0,pl:x.pl?b:0,pt:x.pt?b:0}}
+ case 'rasif':return{plain:0,rein:0,steel:0,lin:x.u==='م.ط'?x.L*x.n:0,area:x.u==='م²'?x.L*x.W*x.n:0};
+ case 'skirt':{const lin=Math.max(0,x.L-(x.dw||0))*x.n;return{plain:0,rein:0,steel:0,lin,area:lin*(x.H||0)/100}}
+ case 'raft':{const A=x.B*x.C,n=x.n||1;return{plain:(x.B+2*S.ov)*(x.C+2*S.ov)*S.lean*n,rein:A*x.D*n,steel:n*LX*A*((x.bx+x.by)*w(x.db)+(x.tx+x.ty)*w(x.dt))}}
+ case 'rm':{const P=x.P>0?x.P:2*(x.L+x.W),FA=(x.A>0?x.A:x.L*x.W)*x.n;return{plain:0,rein:0,steel:0,area:FA+Math.max(0,P*x.H*x.n-(x.dd||0))}}
+ default:return calcOld(k,x);
+ }}
+function calcOld(k,x){const r={plain:0,rein:0,steel:0};
  switch(k){
  case 'foot':{const B=x.B,C=x.C,h=x.D,E=x.E,F=x.F,G=x.G,H=x.H,I=x.I,J=x.J;
   r.plain=(B+2*S.ov)*(C+2*S.ov)*S.lean*J;r.rein=B*C*h*J;
@@ -139,7 +219,9 @@ function calc(k,x){const r={plain:0,rein:0,steel:0};
  case 'beam':{const Hd=x.C,W=x.D,Ln=x.E,Ded=x.M,n=Hd*W*(Ln-Ded);
   r.rein=n;r.steel=Ln*(x.G+x.I+x.H)*LF()*w(x.F)+2*(W+Hd)*(x.K*(Ln-Ded)*.5+x.J*(Ln-Ded)*.5)*w(x.L);break}
  case 'exc':r.exc=x.B*x.C*x.D*x.n;break;
- case 'stone':r.stone=x.B*x.C*x.D*x.n;break;
+ case 'stwall':{const base=x.A>0?x.A:x.L*x.H;const a=Math.max(0,base*x.n-(x.op||0));r.area=a;r.vol=a*x.T;break}
+ case 'skirt':r.lin=x.L*x.n;r.area=r.lin*x.H/100;break;
+ case 'op':r.cnt=x.n;r.area=x.W*x.H*x.n;break;
  case 'bf':r.back=Math.max(0,x.B*x.C*x.D*x.n-(x.dd||0));break;
  case 'kur':r.kur=x.B*x.C*x.D*x.n;break;
  case 'jaam':{const v=x.B*x.C*x.D*x.n;r.jaam=v*x.rp/100;r.jcon=v*(100-x.rp)/100;break}
@@ -154,48 +236,124 @@ function calc(k,x){const r={plain:0,rein:0,steel:0};
  case 'tl':if(x.sub==='متر طولي')r.lin=Math.max(0,(x.L||x.P||0)*(x.n||1)-(x.dd||0)+(x.ad||0));else r.area=fitem(x);break;
  }return r}
 function sumK(ks,f){let s=0;ks.forEach(k=>(D[k]||[]).forEach(x=>s+=calc(k,x)[f]||0));return s}
-function ms(k){const r={plain:0,rein:0,steel:0,exc:0,stone:0,back:0,kur:0,jaam:0,jcon:0,blk:0,area:0};(D[k]||[]).forEach(x=>{const c=calc(k,x);for(const f in r)r[f]+=c[f]||0});return r}
+function ms(k){const r={plain:0,rein:0,steel:0,exc:0,kur:0,jaam:0,jcon:0,area:0,vol:0,cnt:0,lin:0,pl:0,pt:0};(D[k]||[]).forEach(x=>{const c=calc(k,x);for(const f in c)r[f]=(r[f]||0)+(c[f]||0)});return r}
+function winArea(){return (D.op||[]).filter(x=>x.ty==='نافذة').reduce((s,x)=>s+x.W*x.H*x.n,0)}
+function digVal(){return D.dig.on?(sumK(['foot','sfoot'],'plain')/Math.max(S.lean,0.001))*(D.dig.h||0):0}
+function DEDV(){return{fp:sumK(['foot','sfoot'],'plain'),fr:sumK(['foot','sfoot'],'rein'),nk:sumK(['neck'],'rein'),bm:sumK(['beam'],'rein'),rp:sumK(['raft'],'plain'),rr:sumK(['raft'],'rein')}}
+function dedSum(){const v=DEDV();return ['fp','fr','nk','bm','rp','rr'].reduce((s,k)=>s+(D.ded[k]?v[k]:0),0)}
+function secCalc(kind){
+ const isSlab=kind==='slab',two=kind==='rib2';
+ const want=isSlab?'عادية':(two?'هردي باتجاهين':'هردي باتجاه واحد');
+ const panels=D[kind]||[];
+ const beams=(D.sbeam||[]).filter(x=>(x.ty||'عادية')===want&&x.E!==undefined);
+ const gross=panels.reduce((s,x)=>s+x.B*x.C*x.n,0),foot=beams.reduce((s,x)=>s+bmFoot(x),0);
+ const An=Math.max(0,gross-foot),f=gross>0?An/gross:0;
+ const bR=beams.reduce((s,x)=>s+bmRein(x),0),bS=beams.reduce((s,x)=>s+bmSteel(x),0);
+ let rein0=0,steel0=0,blk=0;
+ if(isSlab){
+  rein0=panels.reduce((s,x)=>s+x.B*x.C*x.n*x.D,0)-beams.reduce((s,x)=>s+bmFoot(x)*(x.t||0),0);
+  steel0=panels.reduce((s,x)=>s+(x.V*x.C+x.H*x.B)*x.n*w(x.G)*LF(),0)*f;
+ }else{
+  panels.forEach(x=>{
+   const hr=x.D-x.t;
+   if(!two){
+    const N=Math.ceil(x.C/Math.max(x.s,0.01)),plan=N*x.bw*x.B*x.n;
+    rein0+=N*x.bw*hr*x.B*x.n*f+x.B*x.C*x.n*x.t*f;
+    const pk=Math.max(0,(x.B*x.C*x.n-plan)*f);
+    blk+=Math.ceil(pk*WF()/(S.blen*Math.max(0.01,x.s-x.bw))-1e-9);
+    steel0+=(N*(x.nb*w(x.db)+x.nt*w(x.dt))*x.B*LF()+N*x.ks*x.B*2*(x.bw+hr)*w(x.ds))*x.n*f+(x.mv+x.mh)*x.B*x.C*w(x.dm)*LF()*x.n*f;
+   }else{
+    const Nx=Math.ceil(x.B/Math.max(x.sx,0.01)),Ny=Math.ceil(x.C/Math.max(x.sy,0.01));
+    const plan=x.bw*(Ny*x.B+Nx*x.C-Nx*Ny*x.bw);
+    rein0+=plan*hr*x.n*f+x.B*x.C*x.n*x.t*f;
+    const pk=Math.max(0,(x.B*x.C*x.n-plan*x.n)*f);
+    blk+=Math.ceil(pk*WF()/(Math.max(0.01,x.sx-x.bw)*Math.max(0.01,x.sy-x.bw))-1e-9);
+    const len=Ny*x.B+Nx*x.C;
+    steel0+=len*(x.nb*w(x.db)+x.nt*w(x.dt))*LF()*x.n*f+len*x.ks*2*(x.bw+hr)*w(x.ds)*x.n*f+(x.mv+x.mh)*x.B*x.C*w(x.dm)*LF()*x.n*f;
+   }
+  });
+ }
+ return{rein:rein0+bR,steel:steel0+bS,blk,rein0,steel0,bR,bS};
+}
+function extAgg(){let pl=0,pt=0;(D.ext||[]).forEach(x=>{const b=(x.A>0?x.A:x.P*x.H)*x.n;if(x.pl)pl+=b;if(x.pt)pt+=b});const ded=(D.extWin?winArea():0)+(D.extDedM||0);return{pl:Math.max(0,pl-ded),pt:Math.max(0,pt-ded)}}
+function rasifAgg(){let lin=0,area=0;(D.rasif||[]).forEach(x=>{if(x.u==='م.ط')lin+=x.L*x.n;else area+=x.L*x.W*x.n});return{lin,area}}
+function roomAgg(){const o={pw:0,pc:0,pdw:0,pdc:0,sc:0,tf:{},tw:{}};(D.rm||[]).forEach(x=>{const P=x.P>0?x.P:2*(x.L+x.W),FA=(x.A>0?x.A:x.L*x.W)*x.n,WA=Math.max(0,P*x.H*x.n-(x.dd||0));if(x.pw)o.pw+=WA;if(x.pc)o.pc+=FA;if(x.pdw)o.pdw+=WA;if(x.pdc)o.pdc+=FA;if(x.sc)o.sc+=FA*(S.screed??0.05);if(x.tf){const k=(x.ft||RT[0])+' '+(x.fs||RSF[0]);o.tf[k]=(o.tf[k]||0)+FA}if(x.tw){const k=(x.wt||RT[1])+' '+(x.ws||RSW[0]);o.tw[k]=(o.tw[k]||0)+WA}});return o}
+function opAgg(){const all=D.op||[],wn=all.filter(x=>x.ty==='نافذة'),dn=all.filter(x=>x.ty!=='نافذة');const c=a=>a.reduce((s,x)=>s+x.n,0),ar=a=>a.reduce((s,x)=>s+x.W*x.H*x.n,0);return{wc:c(wn),wa:ar(wn),dc:c(dn),da:ar(dn)}}
+function rmDed(x,f){return +((x.ex&&x.ex[f]&&x.ex[f].d)||0)}
+function rmOvr(x,f){const v=x.ex&&x.ex[f]?x.ex[f].o:undefined;return(v===undefined||v===null||v==='')?undefined:+v}
+function rmBase(x,f){const P=x.P>0?x.P:2*(x.L+x.W),FA=(x.A>0?x.A:x.L*x.W)*x.n,WA=P*x.H*x.n;
+ switch(f){case 'pw':case 'pdw':case 'tw':return WA;case 'pc':case 'pdc':case 'tf':return FA;case 'sc':return FA*(S.screed??0.05);case 'sk':return P*x.n}
+ return 0}
+function rmTile(x,f){const e=(x.ex&&x.ex[f])||{};return{ty:e.ty||(f==='tf'?RT[0]:RT[1]),sz:e.sz||(f==='tf'?RSF[0]:RSW[0])}}
+function rmVal(x,f){const o=rmOvr(x,f);return Math.max(0,(o!==undefined?o:rmBase(x,f))-rmDed(x,f))}
+function finAgg(){const o={pw:0,pdw:0,pc:0,pdc:0,sc:0,sk:0,tf:{},tw:{}};
+ (D.rm||[]).forEach(x=>{['pw','pdw','pc','pdc','sc','sk'].forEach(f=>{if(x[f])o[f]+=rmVal(x,f)});
+  if(x.tf){const t=rmTile(x,'tf'),k=t.ty+' '+t.sz;o.tf[k]=(o.tf[k]||0)+rmVal(x,'tf')}
+  if(x.tw){const t=rmTile(x,'tw'),k=t.ty+' '+t.sz;o.tw[k]=(o.tw[k]||0)+rmVal(x,'tw')}});
+ const wd=winArea();
+ ['pw','pdw'].forEach(f=>{if(D.wdx&&D.wdx[f])o[f]=Math.max(0,o[f]-wd)});
+ if(D.wdx&&D.wdx.tw){const tot=Object.values(o.tw).reduce((a,b)=>a+b,0);if(tot>0)Object.keys(o.tw).forEach(k=>{o.tw[k]=Math.max(0,o.tw[k]-wd*o.tw[k]/tot)})}
+ return o}
 function totals(){const T={};
- T.P=sumK(KC,'plain');T.R=sumK(KC,'rein');T.ST=sumK(KC,'steel');T.STW=T.ST*WF();
+ const K0=['foot','sfoot','sh','raft','col','neck','beam'];
+ T.P=sumK(['foot','sfoot','sh','raft'],'plain');
+ T.slab=secCalc('slab');T.r1=secCalc('rib');T.r2=secCalc('rib2');
+ T.R=sumK(K0,'rein')+T.slab.rein+T.r1.rein+T.r2.rein;
+ T.ST=sumK(K0,'steel')+T.slab.steel+T.r1.steel+T.r2.steel;
+ T.bR=T.slab.bR+T.r1.bR+T.r2.bR;T.bS=T.slab.bS+T.r1.bS+T.r2.bS;
+ T.STW=T.ST*(1+(S.wst??2.5)/100);
  T.mp=mix(T.P,S.dry,S.mixP);T.mr=mix(T.R,S.dry,S.mixR);
- T.jc=sumK(['jaam'],'jcon');T.mj=mix(T.jc,S.dry,S.mixJ);T.jr=sumK(['jaam'],'jaam')*WF();
- T.exc=sumK(['exc'],'exc');T.back=sumK(['bf'],'back');T.stone=sumK(['stone'],'stone')*WF();
- T.wall=sumK(['wall'],'area');T.blk=up(T.wall*S.blk*WF())+sumK(['rib'],'blk');
- T.wm=up(T.wall*S.wm*WF());T.wms=up(T.wm*S.bag*3);
- const gp=D.gf.pl.a-D.gf.pl.d;
- T.pa=Math.max(0,sumK(['pl'],'area')+gp);T.pv=Math.max(0,sumK(['pl'],'vol')+gp*S.thk/100);
- T.pl=mix(T.pv,S.dm,[S.mixM[0],S.mixM[1],0]);
- T.pta=Math.max(0,sumK(['pt'],'area')+D.gf.pt.a-D.gf.pt.d);T.kg=up(T.pta*S.paint*S.coats*WF());
- const G={};
- (D.tl||[]).forEach(x=>{const c=calc('tl',x),k=x.sub+'|'+x.ty+'|'+x.sz,o=G[k]||(G[k]={sub:x.sub,ty:x.ty,sz:x.sz,q:0});o.q+=x.sub==='متر طولي'?c.lin:c.area});
- const AD={'أرضيات':'tf','جدران':'tw','متر طولي':'tm'};
- SUB.forEach(s=>{const g=D.gf[AD[s]],a=g.a-g.d;if(a){const k=s+'|'+DTY[s]+'|'+DSZ[s];const o=G[k]||(G[k]={sub:s,ty:DTY[s],sz:DSZ[s],q:0});o.q+=a}});
- T.tg=Object.values(G).filter(o=>o.q>0).map(o=>{const L=o.sub==='متر طولي';return{l:o.sub+' '+o.ty+' '+o.sz,sub:o.sub,ty:o.ty,L,m:L?o.q:0,n:L?up(o.q*WF()*100)/100:up(o.q*WF()/ta(o.sz)),a:L?o.q*parseFloat(o.sz)/100:o.q}});
- T.tarea=T.tg.reduce((a,o)=>a+o.a,0);
- const ab=up(T.tarea*WF()*S.adh);T.adh={c:ab,s:up(ab*S.bag*3)};
+ T.jr=sumK(['jaam'],'jaam');T.jc=sumK(['jaam'],'jcon');T.mj=mix(T.jc,S.dry,S.mixJ);
+ T.kur=sumK(['kur'],'kur');
+ T.dig=digVal();T.exc=sumK(['exc'],'exc')+T.dig;T.back=Math.max(0,T.exc-dedSum());
+ T.wall=sumK(['wall'],'area');T.stwall=sumK(['stwall'],'area');T.stwV=sumK(['stwall'],'vol');
+ T.blk=up(T.wall*S.blk*WF())+T.r1.blk+T.r2.blk;
+ T.wm=up(T.wall*S.wm*WF());T.wms=T.wm*S.bag*3;
+ T.ext=extAgg();T.rasif=rasifAgg();T.fin=finAgg();T.rm=T.fin;T.skirt=sumK(['skirt'],'lin');T.op=opAgg();
  return T}
-function lines(k,T){const M=ms(k),W=WF(),o=[],L=(d,u,q)=>o.push({l:d,u,q,key:MOD[k].t+' | '+d});
+function grpLines(ms,T){return ms.flatMap(m=>lines(m,T).map(x=>Object.assign({},x,{l:MOD[m].t+' · '+x.l})))}
+function lines(k,T){const o=[];const L=(d,u,q)=>o.push({l:d,u,q,key:MOD[k].t+' | '+d});
+ const M=ms(k),W=1+(S.wst??2.5)/100;
  switch(k){
- case 'foot':case 'sfoot':L('خرسانة عادية','م³',M.plain);L('خرسانة مسلحة','م³',M.rein);L('حديد تسليح (شامل الهدر)','طن',M.steel*W);break;
- case 'col':case 'neck':case 'beam':case 'slab':L('خرسانة مسلحة','م³',M.rein);L('حديد تسليح (شامل الهدر)','طن',M.steel*W);break;
- case 'rib':L('خرسانة مسلحة (أعصاب وطبقة)','م³',M.rein);L('حديد تسليح (شامل الهدر)','طن',M.steel*W);L('بلوك هردي (شامل الهدر)','حبة',M.blk);break;
- case 'exc':L('حفر','م³',M.exc);break;
- case 'bf':L('ردم','م³',M.back);break;
- case 'stone':L('أساس حجري','م³',M.stone);break;
+ case 'gFound':return grpLines(['foot','sfoot','sh','raft'],T);
+ case 'gCol':return grpLines(['col','neck'],T);
+ case 'gSlab':return grpLines(['sbeam','slab','rib','rib2'],T);
+ case 'foot':case 'sfoot':L('خرسانة عادية','م³',M.plain);L('خرسانة مسلحة','م³',M.rein);L('حديد تسليح (شامل هدر '+(S.wst??2.5)+'%)','طن',M.steel*W);break;
+ case 'sh':L('خرسانة عادية (شدادات)','م³',M.plain);L('خرسانة مسلحة (شدادات)','م³',M.rein);L('حديد تسليح (شدادات، شامل الهدر)','طن',M.steel*W);break;
+ case 'raft':L('خرسانة عادية (تحت الحصيرة)','م³',M.plain);L('خرسانة مسلحة (الحصيرة)','م³',M.rein);L('حديد تسليح (الحصيرة، شامل الهدر)','طن',M.steel*W);break;
+ case 'col':case 'neck':case 'beam':L('خرسانة مسلحة','م³',M.rein);L('حديد تسليح (شامل الهدر)','طن',M.steel*W);break;
+ case 'slab':L('خرسانة مسلحة (البلاطة المصمتة)','م³',T.slab.rein0);L('حديد تسليح (شامل الهدر)','طن',T.slab.steel0*W);break;
+ case 'rib':L('خرسانة مسلحة (أعصاب + طبقة)','م³',T.r1.rein0);L('حديد تسليح (شامل الهدر)','طن',T.r1.steel0*W);L('بلوك هوردي','حبة',T.r1.blk);break;
+ case 'rib2':L('خرسانة مسلحة (أعصاب + طبقة)','م³',T.r2.rein0);L('حديد تسليح (شامل الهدر)','طن',T.r2.steel0*W);L('بلوك هوردي','حبة',T.r2.blk);break;
+ case 'sbeam':L('خرسانة مسلحة (جسور البلاطات)','م³',T.bR);L('حديد تسليح (جسور البلاطات، شامل الهدر)','طن',T.bS*W);break;
+ case 'exc':L('حفر يدوي','م³',M.exc);if(D.dig.on)L('حفر القواعد','م³',T.dig);break;
+ case 'bf':L('ردم','م³',T.back);break;
  case 'kur':L('كرسي حجري','م³',M.kur);break;
  case 'jaam':L('جعم (حجر)','م³',M.jaam);L('خرسانة الجعم','م³',M.jcon);break;
- case 'wall':L('بناء جدران بلك','م²',M.area);L('بلك (شامل الهدر)','حبة',up(M.area*S.blk*W));break;
- case 'pl':{const G={};D.pl.forEach(x=>{const q=String(x.tk||1.5);G[q]=(G[q]||0)+calc('pl',x).area});const a=D.gf.pl.a-D.gf.pl.d,q=String(S.thk);G[q]=(G[q]||0)+a;Object.entries(G).filter(([q,v])=>v>0).forEach(([q,v])=>L('تلابيس سماكة '+q+' سم','م²',v));break}
- case 'pt':L('دهان ('+S.coats+' أوجه)','م²',T.pta);break;
- case 'tl':T.tg.forEach(g=>L(g.l,g.L?'م.ط':'م²',g.L?g.m:g.a));break;
- }return o.filter(x=>x.q>0)}
+ case 'wall':L('بناء جدران بلك','م²',M.area);L('بلك (شامل الهدر)','حبة',up(M.area*S.blk*WF()));break;
+ case 'stwall':L('بناء حجر (مساحة)','م²',M.area);L('حجر بناء (حجم)','م³',M.vol);break;
+ case 'ext':L('تلابيس خارجية','م²',T.ext.pl);L('رشة دهانات خارجية','م²',T.ext.pt);break;
+ case 'rasif':L('رصف (متر طولي)','م.ط',T.rasif.lin);L('رصف (متر مربع)','م²',T.rasif.area);break;
+ case 'rm':break;
+ case 'fpw':L('تلابيس جدران داخلية','م²',T.fin.pw);break;
+ case 'fpc':L('تلابيس سقوف داخلية','م²',T.fin.pc);break;
+ case 'fdw':L('دهان جدران داخلية','م²',T.fin.pdw);break;
+ case 'fdc':L('دهان سقوف داخلية','م²',T.fin.pdc);break;
+ case 'ftf':Object.entries(T.fin.tf).forEach(([a,b])=>L('بلاط أرضيات '+a,'م²',b));break;
+ case 'ftw':Object.entries(T.fin.tw).forEach(([a,b])=>L('بلاط جدران '+a,'م²',b));break;
+ case 'fsc':L('صبة أرضيات','م³',T.fin.sc);break;
+ case 'fsk':L('نعلة (متر طولي)','م.ط',T.fin.sk);break;
+ case 'skirt':L('نعلة (متر طولي)','م.ط',T.skirt);break;
+ case 'op':L('نوافذ (عدد)','حبة',T.op.wc);L('نوافذ (مساحة)','م²',T.op.wa);L('أبواب (عدد)','حبة',T.op.dc);L('أبواب (مساحة)','م²',T.op.da);break;
+ }
+ return o.filter(x=>x.q>0)}
 function boq(){const T=totals(),R=[];let G=0,mi=0;
  MAIN.forEach(m=>{if(!D.proj.mains[m.k])return;mi++;R.push({t:'main',n:mi,l:m.t});let st=0,c=0;
   m.subs.forEach(s=>{const L=lines(s,T);if(!L.length)return;R.push({t:'sub',l:MOD[s].t});
    L.forEach(x=>{const p=D.px[x.key]||0,amt=x.q*p;st+=amt;R.push({t:'line',n:mi+'.'+(++c),l:x.l,u:x.u,q:x.q,p,key:x.key,amt})})});
   R.push({t:'tot',l:'إجمالي '+m.t,amt:st});G+=st});
  R.push({t:'grand',l:'الإجمالي العام',amt:G});return R}
-function matsRows(T){return[['أسمنت (الخلطات والملاط والجدران)','كيس',T.mp.c+T.mr.c+T.mj.c+T.pl.c+T.adh.c+T.wm],['رمل','م³',T.mp.s+T.mr.s+T.mj.s+T.pl.s+T.adh.s+T.wms],['كري','م³',T.mp.g+T.mr.g+T.mj.g],['بلك (شامل الهدر)','حبة',T.blk],['الحديد (شامل الهدر)','طن',T.STW],['دهان','كجم',T.kg],['بلاط (مع الهدر)','م²',T.tarea*WF()]]}
+function matsRows(T){return [['أسمنت (الخرسانات والجعم والجدران)','كيس',T.mp.c+T.mr.c+T.mj.c+T.wm],['رمل (الخرسانات والجعم والجدران)','م³',T.mp.s+T.mr.s+T.mj.s+T.wms],['كري (الخرسانات والجعم)','م³',T.mp.g+T.mr.g+T.mj.g],['بلك (شامل الهدر)','حبة',T.blk],['حديد التسليح (شامل هدر '+(S.wst??2.5)+'%)','طن',T.STW]].filter(r=>r[2]>0)}
 /*END*/
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -222,14 +380,15 @@ function initCloud(){
 }
 function cloudCard(){
  if(!firebaseConfigured())return `<div class="card"><b>المزامنة السحابية</b><p class="note">تسجيل الدخول جاهز للربط، لكن يلزم إدخال إعدادات مشروع Firebase أولاً. راجع دليل الربط المرفق.</p><p class="note">حالة البيانات: محفوظة محلياً على هذا الجهاز.</p></div>`;
- if(!CLOUD_USER)return `<div class="card"><b>حسابك والمزامنة السحابية</b><p class="note">يمكنك استخدام التطبيق دون تسجيل الدخول. سجّل الدخول لمزامنة المشاريع بين أجهزتك.</p><label>البريد الإلكتروني<input id="authEmail" type="email" autocomplete="email" placeholder="name@example.com"></label><label>كلمة المرور<input id="authPass" type="password" autocomplete="current-password" placeholder="6 أحرف على الأقل"></label><div class="tools"><button class="btn" data-auth="login">دخول بالبريد</button><button class="ghost" data-auth="signup">إنشاء حساب</button><button class="ghost" data-auth="google">الدخول عبر Google</button></div><small id="authMsg" class="note">تحتاج إلى اتصال بالإنترنت لتسجيل الدخول والمزامنة.</small></div>`;
+ if(!CLOUD_USER)return `<div class="card"><b>حسابك والمزامنة السحابية</b><p class="note">يمكنك استخدام التطبيق دون تسجيل الدخول. سجّل الدخول لمزامنة المشاريع بين أجهزتك.</p><label>البريد الإلكتروني<input id="authEmail" type="email" autocomplete="email" placeholder="name@example.com"></label><label>كلمة المرور<input id="authPass" type="password" autocomplete="current-password" placeholder="6 أحرف على الأقل"></label><div class="tools"><button class="btn" data-auth="login">دخول بالبريد</button><button class="ghost" data-auth="signup">إنشاء حساب</button><button class="ghost" data-auth="google">الدخول عبر Google</button><button class="ghost" data-auth="reset">نسيت كلمة المرور؟</button></div><small id="authMsg" class="note">تحتاج إلى اتصال بالإنترنت لتسجيل الدخول والمزامنة.</small></div>`;
  return `<div class="card"><b>الحساب والمزامنة</b><p>تم تسجيل الدخول: <b>${esc(CLOUD_USER.email||'حساب Google')}</b></p><p class="note" id="syncState">${navigator.onLine?'الحساب متصل؛ يمكن مزامنة المشاريع.':'أنت دون اتصال؛ ستبقى التعديلات محفوظة محلياً.'}</p><div class="tools"><button class="btn" data-cloud-sync="1">مزامنة الآن</button><button class="ghost" data-auth="logout">تسجيل الخروج</button></div></div>`;
 }
 async function authAction(kind){
  if(!CLOUD_READY){toast('إعداد Firebase غير مكتمل؛ راجع دليل الربط');return}
  try{
   if(kind==='logout'){await AUTH.signOut();toast('تم تسجيل الخروج');return}
-  if(kind==='google'){const provider=new FB.auth.GoogleAuthProvider();try{await AUTH.signInWithPopup(provider)}catch(e){if(['auth/popup-blocked','auth/popup-closed-by-user','auth/cancelled-popup-request'].includes(e.code))await AUTH.signInWithRedirect(provider);else throw e}return}
+  if(kind==='reset'){const em=($('#authEmail')?.value||'').trim();if(!em){toast('أدخل البريد الإلكتروني أولاً');return}await AUTH.sendPasswordResetEmail(em);toast('أُرسل رابط استعادة كلمة المرور إلى بريدك');return}
+ if(kind==='google'){const provider=new FB.auth.GoogleAuthProvider();try{await AUTH.signInWithPopup(provider)}catch(e){if(['auth/popup-blocked','auth/popup-closed-by-user','auth/cancelled-popup-request'].includes(e.code))await AUTH.signInWithRedirect(provider);else throw e}return}
   const email=($('#authEmail')?.value||'').trim(),pass=$('#authPass')?.value||'';
   if(!email||pass.length<6){toast('أدخل بريداً صحيحاً وكلمة مرور من 6 أحرف على الأقل');return}
   if(kind==='signup')await AUTH.createUserWithEmailAndPassword(email,pass);else await AUTH.signInWithEmailAndPassword(email,pass);
@@ -242,14 +401,14 @@ async function syncCloud(showToast=false){
  try{
   const ref=DB.collection('users').doc(uid).collection('projects');
   const snap=await ref.get();const remote=new Map();snap.forEach(doc=>remote.set(doc.id,{...doc.data(),id:doc.id}));
-  const local=loadDrafts(),merged=new Map();
+  const hid=new Set(loadHidden()),dead=new Set();for(const [id,r] of [...remote]){if(r.deleted)dead.add(id)}for(const id of dead)remote.delete(id);for(const id of hid)remote.delete(id);const local=loadDrafts().filter(r=>!r.auto&&!dead.has(r.id)&&!hid.has(r.id)),merged=new Map();
   // Merge by project ID; the newest revision wins. Local copies remain available offline.
   for(const [id,r] of remote)merged.set(id,r);
   for(const r of local){const old=merged.get(r.id);if(!old||recTime(r)>recTime(old))merged.set(r.id,r)}
   const batch=DB.batch();let writes=0;
   for(const [id,r] of merged){const old=remote.get(id);if(!old||recTime(r)>recTime(old)){batch.set(ref.doc(id),{...r,ownerUid:uid,updatedAt:recTime(r)||Date.now()},{merge:true});writes++}}
   if(writes)await batch.commit();
-  const mergedList=[...merged.values()].sort((a,b)=>recTime(a)-recTime(b));saveDrafts(mergedList);
+  const mergedList=[...merged.values()].sort((a,b)=>recTime(a)-recTime(b));saveDrafts([...mergedList,...loadDrafts().filter(r=>r.auto)]);
   if(showToast)toast('اكتملت المزامنة: '+mergedList.length+' مشروع');
   if(CUR.v==='drafts'||CUR.v==='home')render();
  }catch(e){console.error(e);if(showToast)toast('تعذرت المزامنة؛ بياناتك المحلية لم تتأثر')}
@@ -257,13 +416,25 @@ async function syncCloud(showToast=false){
 }
 
 function toast(m){const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',2600)}
-function save(){try{localStorage.setItem('qty-v2',JSON.stringify({D}));localStorage.setItem('qty-v3',JSON.stringify({S}))}catch(e){}}
+function save(){try{localStorage.setItem('qty-v2',JSON.stringify({D}));localStorage.setItem('qty-v3',JSON.stringify({S}))}catch(e){}autoDraft()}
+function cleanLegacy(){
+ D.proj.mains=Object.assign(DEF_MAINS(),(D.proj&&D.proj.mains)||{});
+ D.sbeam=(D.sbeam||[]).filter(x=>x.C!==undefined&&x.E!==undefined);
+ D.rm=(D.rm||[]).map(x=>{const y=Object.assign({},x);y.ex=Object.assign({},x.ex||{});
+  if(x.dd>0&&x.pw&&!(y.ex.pw&&y.ex.pw.d))y.ex.pw=Object.assign({},y.ex.pw||{},{d:+x.dd});
+  if(x.ft&&!y.ex.tf)y.ex.tf={ty:x.ft,sz:x.fs||RSF[0]};
+  if(x.wt&&!y.ex.tw)y.ex.tw={ty:x.wt,sz:x.ws||RSW[0]};
+  return y});
+ (D.skirt||[]).forEach(x=>{D.rm.push({name:x.name||'نعلة',n:+(x.n??1),L:0,W:0,H:0,P:+(x.L??0),A:0,sk:true,ex:{sk:{d:(+(x.dw??0))*(+(x.n??1))}}})});
+ D.skirt=[];
+ D.wdx=Object.assign({pw:false,pdw:false,tw:false},D.wdx||{});
+ return D}
 function restore(){let d=null,s=null;try{d=JSON.parse(localStorage.getItem('qty-v2')||'null');s=JSON.parse(localStorage.getItem('qty-v3')||'null')}catch(e){}
- D=blank();const o=(d&&d.D)||{};MODS.forEach(k=>D[k]=o[k]||[]);Object.assign(D.gf,o.gf||{});
+ D=blank();const o=(d&&d.D)||{};MODS.forEach(k=>D[k]=o[k]||[]);cleanLegacy();Object.assign(D.gf,o.gf||{});
  if(o.gf){D.gf.tf=o.gf.fl||D.gf.tf;D.gf.tw=o.gf.wl||D.gf.tw}
- if(o.proj)D.proj=Object.assign(D.proj,o.proj,{mains:Object.assign({exc:true,con:true,bld:true},(o.proj&&o.proj.mains)||{})});
- D.px=o.px||{};
- (o.fin||[]).forEach(x=>{if(x.pl)D.pl.push(Object.assign({},x,{tk:x.tk||1.5}));if(x.pt)D.pt.push(Object.assign({},x));
+ if(o.proj)D.proj=Object.assign(D.proj,o.proj,{mains:Object.assign(DEF_MAINS(),(o.proj&&o.proj.mains)||{})});
+ D.px=o.px||{};D.extWin=!!o.extWin;D.extDedM=o.extDedM||0;D.wdx=Object.assign({pw:false,pdw:false,tw:false},o.wdx||{});D.dig=Object.assign(blank().dig,o.dig||{});D.ded=Object.assign(blank().ded,o.ded||{});
+ [].forEach(x=>{if(x.pl)D.pl.push(Object.assign({},x,{tk:x.tk||1.5}));if(x.pt)D.pt.push(Object.assign({},x));
   if(x.fl)D.tl.push(Object.assign({},x,{ty:x.ft||'برسلان',sub:'أرضيات',sz:x.fs||'60x60'}));
   if(x.wl)D.tl.push(Object.assign({},x,{ty:x.wt||'سراميك',sub:'جدران',sz:x.ws||'30x60'}))});
  S=Object.assign(clone(DEF),(s&&s.S)||{})}
@@ -276,23 +447,56 @@ function cardHead(k,i,x){return `<div class=row><input data-name="1" data-m="${k
 function fields(k,i,x){return `<div class=grid>${MOD[k].f.map(([q,lab])=>`<label>${lab}<input type=number inputmode=decimal step=any data-m="${k}" data-i="${i}" data-f="${q}" value="${x[q]??0}"></label>`).join('')}</div>`}
 function selHTML(k,i,x){const ss=(MOD[k].sel||[]).map(([q,l,op])=>`<label>${l}<select data-m="${k}" data-i="${i}" data-k="${q}">${op(x).map(v=>`<option value="${v}" ${String(v)===String(x[q])?'selected':''}>${v}</option>`).join('')}</select></label>`).join('');return ss?`<div class=grid>${ss}</div>`:''}
 function gadjHTML(k){return `<div class=card><b>خصم وإضافة إجمالي</b><table><tr><th>البند</th><th>خصم</th><th>إضافة</th></tr>${MOD[k].g.map(([g,l])=>`<tr><td>${l}</td><td><input type=number step=any data-g="${g}.d" value="${D.gf[g].d}"></td><td><input type=number step=any data-g="${g}.a" value="${D.gf[g].a}"></td></tr>`).join('')}</table></div>`}
-function modHTML(k){let h=`<div class=tools>${icon(k)}<b>${MOD[k].t}</b><button class=btn data-act=add data-m="${k}">+ بند جديد</button></div>`;
- if(NOTE[k])h+=`<div class=note>${NOTE[k]}</div>`;
- if(MOD[k].g)h+=gadjHTML(k);
- if(!D[k].length)h+='<p class=note>لا توجد بنود.</p>';
- D[k].forEach((x,i)=>h+=`<div class=card>${cardHead(k,i,x)}${fields(k,i,x)}${selHTML(k,i,x)}<div class=res id="r-${k}-${i}"></div></div>`);
+
+
+const DEDL={fp:'خصم الخرسانة العادية للقواعد',fr:'خصم الخرسانة المسلحة للقواعد',nk:'خصم خرسانة الرقاب',bm:'خصم خرسانة الميدة',rp:'خصم الخرسانة العادية للحصيرة',rr:'خصم الخرسانة المسلحة للحصيرة'};
+function digHTML(){const on=D.dig.on;return `<div class=card><b>حفر القواعد</b><p class=note>يُحسب من الخرسانة العادية للقواعد: (الخرسانة العادية ÷ سماكة الخرسانة العادية) × ارتفاع الحفر. السماكة من الإعدادات، وهي الآن ${S.lean} م.</p><div class=grid><label>ارتفاع الحفر م<input type=number inputmode=decimal step=any data-dh=1 value="${D.dig.h}"></label></div><div class=tools><button class=${on?'ghost':'btn'} data-dig=1>${on?'إلغاء حفر القواعد':'تأكيد إضافة حفر القواعد'}</button></div><p class=res id=digRes>${on?'حفر القواعد = '+f3(digVal())+' م³':'لم يُضف بعد'}</p></div>`}
+function bfHTML(){const v=DEDV(),T=totals();const rows=['fp','fr','nk','bm','rp','rr'].map(k=>`<tr><td class=r>${DEDL[k]}</td><td>${f3(v[k])} م³</td><td><button class=${D.ded[k]?'ghost':'btn'} data-ded="${k}">${D.ded[k]?'إلغاء الخصم':'تأكيد الخصم'}</button></td></tr>`).join('');return `<div class=card><b>الردم</b><p class=note>الردم = الحفر الكلي − الخصومات المؤكدة فقط.</p><p>الحفر الكلي: <b id=bfExc>${f3(T.exc)}</b> م³</p><table><tr><th>الخصم</th><th>القيمة</th><th></th></tr>${rows}</table><p class=res id=bfRes>الردم = ${f3(T.back)} م³</p></div>`}
+function updSpecial(){const d=$('#digRes');if(d)d.textContent=D.dig.on?'حفر القواعد = '+f3(digVal())+' م³':'لم يُضف بعد';const T=totals(),e=$('#bfExc');if(e)e.textContent=f3(T.exc);const r=$('#bfRes');if(r)r.textContent='الردم = '+f3(T.back)+' م³'}
+function listHTML(k,cbs){let h=`<div class=tools><button class=btn data-act=add data-m="${k}">+ بند جديد</button></div>`;if(!D[k].length)h+='<p class=note>لا توجد بنود بعد.</p>';D[k].forEach((x,i)=>{h+=`<div class=card>${cardHead(k,i,x)}${fields(k,i,x)}${selHTML(k,i,x)}${cbs?'<div class=tools>'+cbs.map(([f,l])=>`<label class=chk><input type=checkbox data-cb="${f}" data-m="${k}" data-i="${i}" ${x[f]?'checked':''}> ${l}</label>`).join('')+'</div>':''}<div class=res id="r-${k}-${i}"></div></div>`});return h}
+function subHead(t){return `<h3 class=subh>${t}</h3>`}
+function extHTML(){return `<div class=card><b>خصم النوافذ</b><p class=note>مساحة النوافذ = ${f3(winArea())} م² من بند النوافذ والأبواب، وتُخصم بعد التأكيد فقط.</p><div class=tools><button class=${D.extWin?'ghost':'btn'} data-extwin=1>${D.extWin?'إلغاء خصم النوافذ':'تأكيد خصم النوافذ'}</button></div><label>خصم يدوي إضافي م²<input type=number inputmode=decimal step=any data-extm=1 value="${D.extDedM||0}"></label></div>`+listHTML('ext',[['pl','تلابيس خارجية'],['pt','رشة دهانات خارجية']])}
+const RMLBL={pw:'تلابيس الجدران',pc:'تلابيس السقوف',pdw:'دهان الجدران',pdc:'دهان السقوف',tf:'بلاط الأرضيات',tw:'بلاط الجدران',sc:'صبة الأرضيات',sk:'النعلة'};
+const RMCB=[['pw','تلابيس الجدران'],['pc','تلابيس السقوف'],['pdw','دهان الجدران'],['pdc','دهان السقوف'],['tf','بلاط الأرضيات'],['tw','بلاط الجدران'],['sc','صبة الأرضيات'],['sk','النعلة']];
+const FINK={fpw:{k:'pw',u:'م²',wd:true,dl:'خصم م²'},fdw:{k:'pdw',u:'م²',wd:true,dl:'خصم م²'},fpc:{k:'pc',u:'م²',dl:'خصم م²'},fdc:{k:'pdc',u:'م²',dl:'خصم م²'},ftf:{k:'tf',u:'م²',tile:true,dl:'خصم م²'},ftw:{k:'tw',u:'م²',tile:true,wd:true,dl:'خصم م²'},fsc:{k:'sc',u:'م³',dl:'خصم م³'},fsk:{k:'sk',u:'م.ط',dl:'خصم عرض الأبواب م'}};
+function chipsHTML(g,ms){const cur=(CUR.gsG===g&&ms.includes(CUR.gsM))?CUR.gsM:ms[0];
+ return `<div class=chips>${ms.map(m=>`<button class="${m===cur?'on':''}" data-gg="${g}" data-gs="${m}">${MOD[m].t}</button>`).join('')}</div>`+subHead(MOD[cur].t)+listHTML(cur)}
+function exSet(i,f,k,v){const x=D.rm[i];x.ex=x.ex||{};x.ex[f]=Object.assign({},x.ex[f]||{},{[k]:v})}
+function finPage(g){const I=FINK[g],f=I.k;
+ const rows=(D.rm||[]).map((x,i)=>({x,i})).filter(r=>r.x[f]);
+ let h=I.wd?`<div class=card><b>خصم النوافذ</b><p class=note>مساحة النوافذ ${f3(winArea())} م² تُخصم من مجموع هذا التشطيب بعد التأكيد.</p><div class=tools><button class=${D.wdx[f]?'ghost':'btn'} data-wdx="${f}">${D.wdx[f]?'إلغاء خصم النوافذ':'تأكيد خصم النوافذ'}</button></div></div>`:'';
+ if(!rows.length)return h+'<p class=note>لا توجد غرف مؤشرة لهذا التشطيب. أشّر الغرف من بند الغرف.</p>';
+ rows.forEach(({x,i})=>{const base=rmBase(x,f),ov=rmOvr(x,f),dv=rmDed(x,f),val=rmVal(x,f),t=I.tile?rmTile(x,f):null;
+  h+=`<div class=card><b>${esc(x.name||'غرفة '+(i+1))}</b><p class=res>القيمة الآن: ${f3(val)} ${I.u}</p><div class=grid><label>الحساب التلقائي<input value="${f3(base)}" disabled></label><label>تعديل يدوي (فارغ = تلقائي)<input type=number inputmode=decimal step=any data-fo="${f}" data-i="${i}" value="${ov===undefined?'':ov}"></label><label>${I.dl}<input type=number inputmode=decimal step=any data-fd="${f}" data-i="${i}" value="${dv}"></label></div>`;
+  if(t)h+=`<div class=grid><label>النوع<select data-fts="${f}" data-i="${i}">${RT.map(o=>`<option ${o===t.ty?'selected':''}>${o}</option>`).join('')}</select></label><label>المقاس سم<select data-fsz="${f}" data-i="${i}">${(f==='tf'?RSF:RSW).map(o=>`<option ${o===t.sz?'selected':''}>${o}</option>`).join('')}</select></label></div>`;
+  h+=`<div class=tools><button class=ghost data-freset="${f}" data-i="${i}">إعادة إلى الحساب التلقائي</button><button class=ghost data-fdel="${f}" data-i="${i}">إلغاء التأشير لهذا التشطيب</button></div></div>`});
  return h}
-function resTxt(k,x){return Object.entries(calc(k,x)).filter(([a,b])=>b).map(([a,b])=>`${RL[a]||a} ${f3(b)}`).join(' · ')}
-function updRes(){MODS.forEach(k=>D[k].forEach((x,i)=>{const el=$('#r-'+k+'-'+i);if(el)el.textContent=resTxt(k,x)}))}
+function modHTML(k){let h=`<div class=tools>${icon(k)}<b>${MOD[k].t}</b></div>`;if(NOTE[k])h+=`<div class=note>${NOTE[k]}</div>`;
+ const body={bf:()=>bfHTML(),exc:()=>digHTML()+listHTML('exc'),ext:extHTML,
+  gFound:()=>chipsHTML('gFound',['foot','sfoot','sh','raft']),gCol:()=>chipsHTML('gCol',['col','neck']),gSlab:()=>chipsHTML('gSlab',['sbeam','slab','rib','rib2']),
+  rm:()=>listHTML('rm',RMCB),fpw:()=>finPage('fpw'),fpc:()=>finPage('fpc'),fdw:()=>finPage('fdw'),fdc:()=>finPage('fdc'),ftf:()=>finPage('ftf'),ftw:()=>finPage('ftw'),fsc:()=>finPage('fsc'),fsk:()=>finPage('fsk')}[k];
+ return h+(body?body():listHTML(k))}
+function resTxt(k,x){
+ if(k==='rm')return 'جدران '+f2(rmBase(x,'pw'))+' م² · أرضية '+f2(rmBase(x,'pc'))+' م²';
+ if(k==='ext')return 'مساحة '+f2((x.A>0?x.A:x.P*x.H)*x.n)+' م²';
+ if(k==='rasif')return x.u==='م.ط'?f2(x.L*x.n)+' م.ط':f2(x.L*x.W*x.n)+' م²';
+ if(k==='skirt')return f2(Math.max(0,x.L-(x.dw||0))*x.n)+' م.ط';
+ if(k==='op')return 'مساحة '+f2(x.W*x.H*x.n)+' م²';
+ if(k==='slab'||k==='rib'||k==='rib2')return 'حجم إجمالي '+f3(x.B*x.C*x.D*x.n)+' م³';
+ return Object.entries(calc(k,x)).filter(([a,b])=>b).map(([a,b])=>`${RL[a]||a} ${f3(b)}`).join(' · ')}
+function matsHTML(T){const st=T.R>0?T.ST*1000/T.R:0;const cs=[['خرسانة مسلحة (م³)',f3(T.R)],['حديد صافي (طن)',f3(T.ST)],['حديد شامل هدر '+(S.wst??2.5)+'% (طن)',f3(T.STW)],['نسبة الحديد الصافي (كجم/م³ مسلح)',f2(st)],['خرسانة عادية للقواعد والشدادات (م³)',f3(T.P)]];return '<table>'+cs.map(([a,b])=>`<tr><td class=r>${a}</td><td>${b}</td></tr>`).join('')+'</table><table><tr><th>المادة</th><th>الوحدة</th><th>الكمية</th></tr>'+matsRows(T).map(([l,u,q])=>`<tr><td>${l}</td><td>${u}</td><td>${f2(q)}</td></tr>`).join('')+'</table>'}
+
+function updRes(){updSpecial();MODS.forEach(k=>D[k].forEach((x,i)=>{const el=$('#r-'+k+'-'+i);if(el)el.textContent=resTxt(k,x)}))}
+function projOK(){const P=D.proj;return !!(P.name&&P.name.trim()&&P.type&&P.owner&&P.owner.trim())}
 function projHTML(){const P=D.proj;
  return `<div class=card><b>بيانات المشروع</b><div class=grid>
  <label>اسم المشروع<input data-pj="name" value="${esc(P.name)}"></label>
- <label>نوع المشروع<select data-pj="type">${['حساب كميات من مخططات','حصر موقع'].map(o=>`<option ${o===P.type?'selected':''}>${o}</option>`).join('')}</select></label>
+ <label>نوع المشروع<select data-pj="type"><option value="" ${!P.type?'selected':''}>اختر نوع المشروع</option>${['حساب كميات من مخططات','حصر موقع'].map(o=>`<option ${o===P.type?'selected':''}>${o}</option>`).join('')}</select></label>
  <label>مالك المشروع<input data-pj="owner" value="${esc(P.owner)}"></label>
  <label>مهندس الحصر<input data-pj="engineer" value="${esc(P.engineer||'')}"></label>
  <label>تاريخ بدء العمل<input type=date data-pj="start" value="${P.start}"></label></div></div>
  <div class=card><b>بنود الحصر</b>${MAIN.map(m=>`<label class=chk><input type=checkbox data-mn="${m.k}" ${P.mains[m.k]?'checked':''}>${m.t}</label>`).join('')}</div>
- <div class=tools><button class=btn data-go=1>الحصر ←</button></div>`}
+ <div class=tools><button class=btn data-go=1 id=goBtn ${projOK()?'':'disabled'}>الحصر ←</button></div><p class=note id=projHint style="${projOK()?'display:none':''}">أكمل اسم المشروع ونوعه ومالكه للمتابعة إلى الحصر.</p>`}
 function mainSumHTML(m,T){return '<table>'+m.subs.map(s=>lines(s,T).map(x=>`<tr><td class=r>${MOD[s].t}</td><td class=r>${x.l}</td><td>${f2(x.q)} ${x.u}</td></tr>`).join('')).join('')+'</table>'}
 function itemsHTML(){const sel=MAIN.filter(m=>D.proj.mains[m.k]);
  if(!sel.length)return '<p class=note>لم تختر بنود الحصر. ارجع إلى "المشروع" واختر البنود.</p>';
@@ -314,7 +518,7 @@ function checksHTML(T){const c=[];let inc=0;MODS.forEach(k=>D[k].forEach(x=>{if(
  const cm=T.R>0?T.mr.c/T.R:0;c.push([cm&&(cm<4||cm>12)?'warn':'ok','أسمنت لكل م³ مسلح: '+f2(cm)+' كيس (المعتاد 4 إلى 12)']);
  const bj=(D.jaam||[]).filter(x=>x.rp<0||x.rp>100).length;c.push([bj?'warn':'ok','نسبة الجعم خارج 0 إلى 100%: '+bj+' بند']);
  return c.map(([s,t])=>`<div class=${s}>${s==='ok'?'✔':'⚠'} ${t}</div>`).join('')}
-function matsHTML(T){return '<table><tr><th>المادة</th><th>الوحدة</th><th>الكمية</th></tr>'+matsRows(T).map(([l,u,q])=>`<tr><td>${l}</td><td>${u}</td><td>${f2(q)}</td></tr>`).join('')+'</table>'}
+
 function sumHTML(){const T=totals(),P=D.proj;
  const fin=CUR.fin?`<div class=card><b>إنهاء المشروع</b>${destSel()}<div class=tools><button class=btn data-save=d>حفظ كمسودة</button><button class=btn data-save=x>حفظ كمسودة وتصدير Excel</button><button class=btn data-save=p>حفظ كمسودة وتصدير PDF</button><button class=ghost data-fin=0>رجوع</button></div></div>`:'';
  return `<div class=card><b>${esc(P.name)||'مشروع بدون اسم'}</b><p>${P.type} · المهندس: ${esc(P.engineer||'')} · المالك: ${esc(P.owner)} · البدء: ${P.start}</p></div>`
@@ -326,9 +530,9 @@ function setHTML(){const n=(q,l)=>`<label>${l}<input type=number step=any data-s
  const sl=(k,l)=>{const c=S['mix'+k+'S'];return `<label>${l}<select data-mx="${k}">${[...Object.keys(MIX),'أدخل نسبة'].map(o=>`<option ${o===c?'selected':''}>${o}</option>`).join('')}</select></label>`};
  const cu=(q,ls)=>`<div class=grid>${ls.map((l,i)=>`<label>${l}<input type=number step=any data-s="${q}.${i}" value="${S[q][i]}"></label>`).join('')}</div>`;
  const mx=k=>S['mix'+k+'S']==='أدخل نسبة'?cu('mix'+k,['أسمنت','رمل','كري']):'';
- return `<div class=note>تُطبَّق هذه الإعدادات على كل المشاريع.</div><div class=card><b>مكان الحفظ الافتراضي</b>${destSel()}</div><div class=card><b>الخرسانة والحديد</b><div class=grid>${n('waste','الهدر %')}${n('lap','التراكب % (الطولي والبلاطات)')}${n('steel','كثافة الحديد كجم/م³')}${n('dry','جفاف الخرسانة')}${n('bag','حجم كيس الأسمنت م³')}${n('lean','سماكة العادية م')}${n('ov','زيادة العادية لكل جانب م')}${n('blen','طول بلوكة الأعصاب م')}</div>
+ return `<div class=note>تُطبَّق هذه الإعدادات على كل المشاريع.</div><div class=card><b>مكان الحفظ الافتراضي</b>${destSel()}</div><div class=card><b>الخرسانة والحديد</b><div class=grid>${n('waste','الهدر %')}${n('lap','التراكب % (الطولي والبلاطات)')}${n('steel','كثافة الحديد كجم/م³')}${n('wst','هدر الحديد %')}${n('screed','سماكة صبة الأرضيات م')}${n('dry','جفاف الخرسانة')}${n('bag','حجم كيس الأسمنت م³')}${n('lean','سماكة الخرسانة العادية م (تُحسب منها حفر القواعد)')}${n('ov','زيادة العادية لكل جانب م')}${n('blen','طول بلوكة الأعصاب م')}</div>
  <div class=grid>${sl('R','نسبة المسلحة')}${sl('P','نسبة العادية')}${sl('J','نسبة خرسانة الجعم')}</div>${mx('R')}${mx('P')}${mx('J')}</div>
- <div class=card><b>التلابيس والدهان والبلاط والجدران</b><div class=grid>${n('thk','خصم/إضافة اللياسة الإجمالي سم')}${n('dm','جفاف ملاط اللياسة')}${n('paint','دهان كجم/م² للوجه')}${n('coats','عدد الأوجه')}${n('adh','ملاط البلاط كيس/م²')}${n('blk','بلك حبة/م²')}${n('wm','ملاط الجدران كيس/م²')}</div><p>نسبة ملاط اللياسة (أسمنت:رمل):</p>${cu('mixM',['أسمنت','رمل'])}</div>
+ <div class=card><b>التلابيس والدهان والبلاط والجدران</b><div class=grid>${n('thk','خصم/إضافة اللياسة الإجمالي سم')}${n('blk','بلك حبة/م²')}${n('wm','ملاط الجدران كيس/م²')}</div><p>نسبة ملاط اللياسة (أسمنت:رمل):</p>${cu('mixM',['أسمنت','رمل'])}</div>
  <div class=tools><button class=ghost id=df>إعادة الافتراضات</button></div>`}
 function render(){nav();const V={home:homeHTML,drafts:draftsHTML,set:setHTML,proj:projHTML,items:itemsHTML,sum:sumHTML};$('#main').innerHTML=V[CUR.v]();updRes();updPx()}
 const DESTS=[['download','الهاتف (مجلد التنزيلات)'],['pick','اختيار مكان محدد على الجهاز'],['share','Google Drive أو تطبيق آخر (مشاركة)']];
@@ -355,7 +559,7 @@ async function exportXlsx(){const P=D.proj,R=boq(),T=totals(),wb=XLSX.utils.book
  ws['!cols']=[{wch:6},{wch:46},{wch:8},{wch:12},{wch:12},{wch:14}];ws['!views']=[{RTL:true}];
  XLSX.utils.book_append_sheet(wb,ws,'جدول الكميات');
  const wm=XLSX.utils.aoa_to_sheet([['المادة','الوحدة','الكمية'],...matsRows(T)]);wm['!views']=[{RTL:true}];XLSX.utils.book_append_sheet(wb,wm,'المواد');
- ['foot','sfoot','col','neck','beam','slab','rib','exc','stone','bf','kur','jaam','wall','pl','tl','pt'].forEach(k=>{const s=XLSX.utils.aoa_to_sheet([['الاسم',...MOD[k].f.map(f=>f[1]),...(MOD[k].sel||[]).map(x=>x[1]),'النتائج'],...D[k].map(x=>[x.name,...MOD[k].f.map(([q])=>x[q]??0),...(MOD[k].sel||[]).map(([q])=>x[q]),resTxt(k,x)])]);s['!views']=[{RTL:true}];XLSX.utils.book_append_sheet(wb,s,MOD[k].t)});
+ MODS.filter(k=>k!=='skirt').forEach(k=>{const s=XLSX.utils.aoa_to_sheet([['الاسم',...MOD[k].f.map(f=>f[1]),...(MOD[k].sel||[]).map(x=>x[1]),'النتائج'],...D[k].map(x=>[x.name,...MOD[k].f.map(([q])=>x[q]??0),...(MOD[k].sel||[]).map(([q])=>x[q]),resTxt(k,x)])]);s['!views']=[{RTL:true}];XLSX.utils.book_append_sheet(wb,s,MOD[k].t)});
  wb.Workbook={CalcPr:{fullCalcOnLoad:true}};
  await saveBlob(new Blob([XLSX.write(wb,{bookType:'xlsx',type:'array'})],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),'حصر-الكميات.xlsx');
 }
@@ -372,28 +576,40 @@ async function exportPdf(){
  finally{el.remove()}
 }
 const PATH={dig:'<path d="M12 4v12M7 11l5 5 5-5M5 20h14"/>',stone:'<circle cx="8" cy="9" r="3"/><circle cx="16" cy="10" r="2.5"/><circle cx="12" cy="16" r="3"/>',box:'<rect x="4" y="6" width="16" height="12" rx="1"/><path d="M4 12h16"/>',col:'<rect x="9" y="3" width="6" height="18"/>',beam:'<rect x="3" y="9" width="18" height="6"/>',rib:'<path d="M5 6v12M9 6v12M13 6v12M17 6v12M4 18h16"/>',wall:'<rect x="3" y="5" width="18" height="14"/><path d="M3 10h18M3 15h18M9 5v5M15 10v5M9 15v4"/>',layer:'<path d="M3 8l9-4 9 4-9 4zM3 13l9 4 9-4"/>',brush:'<rect x="4" y="4" width="12" height="5" rx="1"/><path d="M16 6h4v8h-7v4"/>',tile:'<rect x="4" y="4" width="7" height="7"/><rect x="13" y="4" width="7" height="7"/><rect x="4" y="13" width="7" height="7"/><rect x="13" y="13" width="7" height="7"/>'};
-const MI={exc:['dig','#134e4a'],bf:['dig','#115e59'],stone:['stone','#475569'],kur:['stone','#334155'],jaam:['stone','#0e7490'],foot:['box','#0f766e'],sfoot:['box','#0d7377'],col:['col','#155e75'],neck:['col','#1e6f78'],beam:['beam','#212529'],slab:['box','#3f4a57'],rib:['rib','#0f5f66'],wall:['wall','#0b6b78'],pl:['layer','#2e6b66'],pt:['brush','#0f766e'],tl:['tile','#18706b']};
-const MAINI={exc:['dig','#134e4a'],con:['box','#0f766e'],bld:['wall','#212529']};
+const MI={fpw:['layer','#3a4a5c'],fpc:['layer','#3a4a5c'],fdw:['brush','#0f766e'],fdc:['brush','#0f766e'],ftf:['tile','#1d5f66'],ftw:['tile','#1d5f66'],fsc:['box','#5b6b3a'],fsk:['tile','#1d5f66'],gFound:['box','#0f766e'],gCol:['col','#155e75'],gSlab:['slab','#3f4a57'],raft:['box','#0e5a66'],sh:['beam','#0f6b6b'],sbeam:['beam','#2b4a5c'],hb1:['beam','#1f5d62'],hb2:['beam','#1f5d62'],rib2:['rib','#0d5f5a'],ext:['brush','#0f766e'],rm:['layer','#3a4a5c'],rasif:['box','#5b6b3a'],stwall:['wall','#0e5a66'],skirt:['tile','#1d5f66'],op:['box','#3a4a5c'],exc:['dig','#134e4a'],bf:['dig','#115e59'],stone:['stone','#475569'],kur:['stone','#334155'],jaam:['stone','#0e7490'],foot:['box','#0f766e'],sfoot:['box','#0d7377'],col:['col','#155e75'],neck:['col','#1e6f78'],beam:['beam','#212529'],slab:['box','#3f4a57'],rib:['rib','#0f5f66'],wall:['wall','#0b6b78'],pl:['layer','#2e6b66'],pt:['brush','#0f766e'],tl:['tile','#18706b']};
+const MAINI={mHfr:['dig','#7a4e24'],mBld:['wall','#b5532b'],mCon:['box','#0f766e'],mExt:['brush','#0f766e'],mInt:['layer','#3a4a5c'],mOpn:['box','#3a4a5c']};
 function icon(k,map){const [p,c]=(map||MI)[k];return `<span class=mi style="background:${c}"><svg viewBox="0 0 24 24">${PATH[p]}</svg></span>`}
 function homeHTML(){const ic={plus:'<path d="M12 5v14M5 12h14"/>',folder:'<path d="M3 7h6l2 2h10v9H3z"/>',gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>'};
  const svg=p=>`<svg viewBox="0 0 24 24">${p}</svg>`;
- return `<div class=hero><img alt="" src="icon-512.png" style="width:120px;height:120px;border-radius:26px;box-shadow:0 10px 26px rgba(20,30,32,.28)"><h2>جدول حصر الكميات</h2><p>هذا التطبيق تم برمجته من قبل المهندس يونس السياسة عبر الذكاء الإصطناعي كلود</p></div>${cloudCard()}
- <div class=opts>
+ return `<div class=hero><img alt="حصر الكميات QS" src="data:image/jpeg;base64,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" style="width:min(72vw,300px);height:auto;border-radius:18px"><h2>جدول حصر الكميات</h2><p>هذا التطبيق تم برمجته من قبل المهندس يونس السياسة عبر الذكاء الإصطناعي كلود</p></div>${cloudCard()}
+ ${resumeCard()} <div class=opts>
   <button class=opt data-new=1><span class=ic>${svg(ic.plus)}</span><b>مشروع جديد</b></button>
   <button class=opt data-tab=drafts><span class=ic>${svg(ic.folder)}</span><b>استعراض المشاريع (المسودات المحفوظة)</b><small>${loadDrafts().length} مسودة</small></button>
   <button class=opt data-tab=set><span class=ic>${svg(ic.gear)}</span><b>الإعدادات العامة</b></button>
  </div>`}
 function loadDrafts(){try{return JSON.parse(localStorage.getItem('qty-drafts')||'[]')}catch(e){return[]}}
 function saveDrafts(L){try{localStorage.setItem('qty-drafts',JSON.stringify(L))}catch(e){}}
-function draftsHTML(){const L=loadDrafts();
- const imp='<label class=ghost style="display:inline-block;cursor:pointer">استيراد مسودة من ملف<input type=file accept=".json,application/json" data-imp=1 style="display:none"></label>';
- const head=cloudCard()+`<div class=tools><button class=btn data-new=1>مشروع جديد</button>${imp}</div>`;
+function draftsHTML(){const L=loadDrafts();const imp='<label class=ghost style="display:inline-block;cursor:pointer">استيراد مسودة من ملف<input type=file accept=".json,application/json" data-imp=1 style="display:none"></label>';
+ let cl='';if(CLOUD_USER){cl=`<div class=card><b>مشاريع السحابة</b><p class=note>المشاريع المحفوظة في حسابك ولا توجد على هذا الجهاز.</p><div class=tools><button class=ghost data-cloud-list=1>تحديث قائمة السحابة</button></div>`+(CLOUD_LIST===null?'':(CLOUD_LIST.length?CLOUD_LIST.map(r=>`<div class=card><b>${esc(r.name||'مشروع بدون اسم')}</b><div class=tools><button class=btn data-cloud-dl="${r.id}">تحميل</button></div></div>`).join(''):'<p class=note>لا توجد مشاريع أخرى في السحابة.</p>'))+'</div>'}
+ const head=cloudCard()+cl+`<div class=tools><button class=btn data-new=1>مشروع جديد</button>${imp}</div>`;
  if(!L.length)return head+'<p class=note>لا توجد مسودات محفوظة بعد.</p>';
- return head+L.slice().reverse().map(r=>`<div class=card><b>${esc(r.name)}</b><p>${esc(r.type)}${r.engineer?' · المهندس: '+esc(r.engineer):''} · آخر حفظ: ${r.updated}</p><div class=tools><button class=btn data-open-draft="${r.id}">فتح واستعراض</button><button class=ghost data-dl-draft="${r.id}">تنزيل ملف المسودة</button><button class=del data-del-draft="${r.id}">حذف</button></div></div>`).join('')}
+ return head+L.slice().reverse().map(r=>`<div class=card><b>${esc(r.name||'مشروع بدون اسم')}</b>${r.auto?' <span class=tag>تعديلات غير محفوظة</span>':''}<p>${esc(r.type)}${r.engineer?' · المهندس: '+esc(r.engineer):''} · آخر حفظ: ${r.updated}</p><div class=tools><button class=btn data-open-draft="${r.id}">فتح واستعراض</button><button class=ghost data-dl-draft="${r.id}">تنزيل ملف المسودة</button><button class=ghost data-del-draft="${r.id}">إخفاء من هذا الجهاز</button>${CLOUD_USER?`<button class=del data-cloud-del="${r.id}">حذف من السحابة</button>`:''}</div></div>`).join('')}
 function newProject(){D=blank();CUR={v:'proj',m:null,s:null,pid:null,fin:false,started:false};save();render()}
-function openDraft(id){const r=loadDrafts().find(x=>x.id===id);if(!r)return;D=Object.assign(blank(),clone(r.D));D.proj=Object.assign(blank().proj,D.proj);CUR={v:'items',m:null,s:null,pid:id,fin:false,started:true};save();render()}
-function delDraft(id){if(!confirm('حذف هذه المسودة؟'))return;saveDrafts(loadDrafts().filter(x=>x.id!==id));render()}
-function mkRec(id){const P=D.proj;return{id,name:P.name,type:P.type,owner:P.owner,engineer:P.engineer||'',start:P.start,updated:new Date().toISOString().slice(0,10),updatedAt:Date.now(),D:clone(D)}}
+function openDraft(id){const r=loadDrafts().find(x=>x.id===id);if(!r)return;D=Object.assign(blank(),clone(r.D));cleanLegacy();D.proj=Object.assign(blank().proj,D.proj);CUR={v:'items',m:null,s:null,pid:id,fin:false,started:true};save();render()}
+function loadHidden(){try{return JSON.parse(localStorage.getItem('qty-hidden')||'[]')}catch(e){return[]}}
+function saveHidden(a){try{localStorage.setItem('qty-hidden',JSON.stringify(a))}catch(e){}}
+let CLOUD_LIST=null;
+function delDraft(id){if(!confirm('إخفاء هذا المشروع من هذا الجهاز فقط؟ يبقى في السحابة إن كان محفوظاً فيها.'))return;saveDrafts(loadDrafts().filter(x=>x.id!==id));saveHidden([...new Set([...loadHidden(),id])]);render()}
+async function cloudList(){if(!CLOUD_USER||!DB||!navigator.onLine){toast('يلزم تسجيل الدخول والاتصال بالإنترنت');return}try{const snap=await DB.collection('users').doc(CLOUD_USER.uid).collection('projects').get();const local=new Set(loadDrafts().map(x=>x.id));const out=[];snap.forEach(doc=>{const r={...doc.data(),id:doc.id};if(!r.deleted&&!local.has(doc.id))out.push(r)});CLOUD_LIST=out;render()}catch(e){console.error(e);toast('تعذر جلب قائمة السحابة')}}
+function cloudDownload(id){const r=(CLOUD_LIST||[]).find(x=>x.id===id);if(!r)return;const{ownerUid,deleted,deletedAt,...rest}=r;saveDrafts([...loadDrafts(),{...rest,auto:false}]);saveHidden(loadHidden().filter(x=>x!==id));CLOUD_LIST=(CLOUD_LIST||[]).filter(x=>x.id!==id);toast('تم تحميل المشروع من السحابة');render()}
+async function cloudDelete(id){if(!CLOUD_USER||!DB||!navigator.onLine){toast('يلزم تسجيل الدخول والاتصال بالإنترنت للحذف من السحابة');return}if(!confirm('حذف هذا المشروع نهائياً من السحابة ومن كل الأجهزة؟'))return;try{await DB.collection('users').doc(CLOUD_USER.uid).collection('projects').doc(id).set({id,deleted:true,deletedAt:Date.now(),updatedAt:Date.now(),D:null},{merge:true});saveDrafts(loadDrafts().filter(x=>x.id!==id));CLOUD_LIST=(CLOUD_LIST||[]).filter(x=>x.id!==id);toast('حُذف المشروع من السحابة');render()}catch(e){console.error(e);toast('تعذر الحذف من السحابة؛ لم يُحذف شيء')}}
+let _adT=null;
+function autoDraft(){clearTimeout(_adT);_adT=setTimeout(autoDraftNow,600)}
+function autoDraftNow(){_adT=null;try{if(['home','drafts','set'].includes(CUR.v))return;const P=D.proj;const hasItems=MODS.some(k=>(D[k]||[]).length>0);if(!(P.name||P.owner||hasItems))return;const L=loadDrafts();const id=CUR.pid||('a'+Date.now());const cur=JSON.stringify(D);const prev=L.find(x=>x.id===id);if(prev&&JSON.stringify(prev.D)===cur)return;CUR.pid=id;const rec=mkRec(id);rec.auto=true;const i=L.findIndex(x=>x.id===id);if(i>=0)L[i]=rec;else L.push(rec);saveDrafts(L)}catch(e){}}
+addEventListener('pagehide',()=>{if(_adT){clearTimeout(_adT);autoDraftNow()}});
+addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&_adT){clearTimeout(_adT);autoDraftNow()}});
+function resumeCard(){const a=loadDrafts().filter(r=>r.auto).sort((x,y)=>(y.updatedAt||0)-(x.updatedAt||0))[0];if(!a)return '';return `<div class=card><b>متابعة آخر عمل</b><p>${esc(a.name||'مشروع بدون اسم')} — تعديلات لم تُحفظ بعد</p><button class=btn data-open-draft="${a.id}">متابعة المشروع</button></div>`}
+function mkRec(id){const P=D.proj;return{id,name:P.name,type:P.type,owner:P.owner,engineer:P.engineer||'',start:P.start,updated:new Date().toISOString().slice(0,10),updatedAt:Date.now(),auto:false,D:clone(D)}}
 function saveDraft(kind){if(!D.proj.name){toast('أدخل اسم المشروع أولاً');CUR.v='proj';render();return}
  const L=loadDrafts(),id=CUR.pid||('p'+Date.now()),rec=mkRec(id);const i=L.findIndex(x=>x.id===id);if(i>=0)L[i]=rec;else L.push(rec);
  saveDrafts(L);CUR.pid=id;CUR.fin=false;CUR.started=true;save();
@@ -404,6 +620,16 @@ function dlDraft(id){const r=loadDrafts().find(x=>x.id===id);if(!r)return;saveBl
 async function importDraft(f){if(!f)return;try{const r=JSON.parse(await f.text());if(!r||!r.D)throw 0;const L=loadDrafts();r.id='p'+Date.now();r.updated=new Date().toISOString().slice(0,10);L.push(r);saveDrafts(L);toast('تم استيراد المسودة');render()}catch(e){toast('الملف غير صالح')}}
 document.body.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)return;
  if(t.dataset.tab){CUR.v=t.dataset.tab;render();return}
+ if(t.dataset.cloudList!==undefined){cloudList();return}
+ if(t.dataset.cloudDl){cloudDownload(t.dataset.cloudDl);return}
+ if(t.dataset.cloudDel){cloudDelete(t.dataset.cloudDel);return}
+ if(t.dataset.extwin!==undefined){D.extWin=!D.extWin;save();render();return}
+ if(t.dataset.gs){const m=t.dataset.gs;CUR.gsG=t.dataset.gg;CUR.gsM=m;render();if(!D[m].length){const b=document.querySelector('[data-act=add][data-m="'+m+'"]');if(b)b.click()}return}
+ if(t.dataset.wdx){D.wdx[t.dataset.wdx]=!D.wdx[t.dataset.wdx];save();render();return}
+ if(t.dataset.fdel){if(!confirm('إلغاء التأشير لهذا التشطيب؟ سيُحذف صف الغرفة من هذا التشطيب ويُلغى تعديله وخصمه.'))return;const x=D.rm[+t.dataset.i];x[t.dataset.fdel]=false;if(x.ex)delete x.ex[t.dataset.fdel];save();render();return}
+ if(t.dataset.freset){const x=D.rm[+t.dataset.i];if(x.ex&&x.ex[t.dataset.freset])delete x.ex[t.dataset.freset].o;save();render();return}
+ if(t.dataset.dig!==undefined){D.dig.on=!D.dig.on;save();render();return}
+ if(t.dataset.ded){D.ded[t.dataset.ded]=!D.ded[t.dataset.ded];save();render();return}
  if(t.dataset.auth){authAction(t.dataset.auth);return}
  if(t.dataset.cloudSync){syncCloud(true);return}
  if(t.dataset.new){newProject();return}
@@ -412,7 +638,7 @@ document.body.addEventListener('click',e=>{const t=e.target.closest('button');if
  if(t.dataset.dlDraft!==undefined){dlDraft(t.dataset.dlDraft);return}
  if(t.dataset.save){saveDraft(t.dataset.save);return}
  if(t.dataset.fin!==undefined){CUR.fin=t.dataset.fin==='1';render();return}
- if(t.dataset.go){CUR.started=true;CUR.v='items';render();return}
+ if(t.dataset.go){if(!projOK()){toast('أكمل اسم المشروع ونوعه ومالكه أولاً');return}{CUR.started=true;CUR.v='items';render();return}}
  if(t.dataset.open){CUR.m=t.dataset.open;CUR.s=null;render();return}
  if(t.dataset.back){CUR.m=null;render();return}
  if(t.dataset.sub){CUR.s=t.dataset.sub;render();return}
@@ -423,8 +649,14 @@ document.body.addEventListener('click',e=>{const t=e.target.closest('button');if
  if(t.id==='df'){S=clone(DEF);save();render();return}
  if(t.id==='cl'){if(confirm('حذف كل البنود؟')){const P=D.proj,g=D.gf,px=D.px;D=blank();D.proj=P;D.gf=g;D.px=px;save();render()}return}
 });
-function setProj(t){D.proj[t.dataset.pj]=t.value;save()}
+function setProj(t){D.proj[t.dataset.pj]=t.value;save();const b=$('#goBtn');if(b)b.disabled=!projOK();const hn=$('#projHint');if(hn)hn.style.display=projOK()?'none':''}
 document.body.addEventListener('change',e=>{const t=e.target;
+ if(t.dataset.f!==undefined&&t.dataset.m==='rm'&&['n','L','W','H','P','A'].includes(t.dataset.f)){const x=D.rm[+t.dataset.i];const ov=Object.keys(x.ex||{}).filter(k=>x[k]&&x.ex[k].o!==undefined&&x.ex[k].o!=='');if(ov.length&&confirm('الغرفة «'+(x.name||'')+'» فيها تعديل يدوي في: '+ov.map(k=>RMLBL[k]).join('، ')+'.\nهل تُحدَّث هذه الصفوف المعدلة لتتبع الأبعاد الجديدة؟\nموافق: تُحدَّث وتُلغى التعديلات اليدوية.\nإلغاء: تبقى الصفوف على تعديلها اليدوي.')){ov.forEach(k=>delete x.ex[k].o)}save();render();return}
+ if(t.dataset.cb!==undefined){const x=D[t.dataset.m][+t.dataset.i];if(!t.checked&&t.dataset.m==='rm'&&!confirm('إلغاء تأشير هذه الغرفة لهذا التشطيب؟ سيُحذف صفها من التشطيب وتعديله وخصمه.')){t.checked=true;return}if(!t.checked&&x.ex)delete x.ex[t.dataset.cb];x[t.dataset.cb]=t.checked;save();render();return}
+ if(t.dataset.fo!==undefined){exSet(+t.dataset.i,t.dataset.fo,'o',t.value===''?undefined:num(t.value));save();render();return}
+ if(t.dataset.fd!==undefined){exSet(+t.dataset.i,t.dataset.fd,'d',num(t.value)||0);save();render();return}
+ if(t.dataset.fts!==undefined){exSet(+t.dataset.i,t.dataset.fts,'ty',t.value);save();render();return}
+ if(t.dataset.fsz!==undefined){exSet(+t.dataset.i,t.dataset.fsz,'sz',t.value);save();render();return}
  if(t.dataset.pj){setProj(t);return}
  if(t.dataset.mn){D.proj.mains[t.dataset.mn]=t.checked;save();return}
  if(t.dataset.dest){S.dest=t.value;save();return}
@@ -434,6 +666,8 @@ document.body.addEventListener('change',e=>{const t=e.target;
 });
 document.body.addEventListener('input',e=>{const t=e.target;
  if(t.dataset.pj){setProj(t);return}
+ if(t.dataset.dh!==undefined){D.dig.h=num(t.value);save();updRes();return}
+ if(t.dataset.extm!==undefined){D.extDedM=num(t.value);save();updRes();return}
  if(t.dataset.f!==undefined){D[t.dataset.m][+t.dataset.i][t.dataset.f]=num(t.value);save();updRes();return}
  if(t.dataset.name!==undefined){D[t.dataset.m][+t.dataset.i].name=t.value;save();return}
  if(t.dataset.g){const[g,f]=t.dataset.g.split('.');D.gf[g][f]=num(t.value);save();return}

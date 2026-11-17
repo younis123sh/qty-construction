@@ -1,70 +1,40 @@
-const CACHE_NAME = 'qty-pwa-v16';
-const APP_SHELL = [
-  './',
-  './index.html',
-  './manifest.webmanifest',
-  './icon-192.png',
-  './icon-512.png',
-  './icon-maskable-512.png',
-  './apple-touch-icon.png'
-];
+// حصر كميات QOB - عامل الخدمة
+// الاستراتيجية:
+// - الصفحة الرئيسية والمانيفست: من الإنترنت أولاً، ثم من الكاش عند عدم وجود اتصال.
+// - الأيقونات ومكتبات Firebase والتصدير (cdnjs وgstatic): من الكاش أولاً.
+// - واجهات Firebase نفسها تذهب إلى الشبكة دائماً ولا تُخزَّن.
+// عند كل نشر لنسخة جديدة غيّر رقم الكاش أدناه (مثلاً qty-v18).
+const C = 'qty-v17';
+const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png'];
+const CDN = ['www.gstatic.com', 'cdnjs.cloudflare.com'];
 
-// Install the local application shell. All listed files are shipped in this package.
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(APP_SHELL))
-      .then(() => self.skipWaiting())
-  );
-});
+self.addEventListener('install', e => e.waitUntil(caches.open(C).then(c => c.addAll(CORE)).then(() => self.skipWaiting())));
+self.addEventListener('activate', e => e.waitUntil(
+  caches.keys().then(ks => Promise.all(ks.filter(k => k.startsWith('qty-') && k !== C).map(k => caches.delete(k))))
+    .then(() => self.clients.claim())
+));
 
-self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys()
-      .then(keys => Promise.all(keys.filter(key => key.startsWith('qty-pwa-') && key !== CACHE_NAME)
-        .map(key => caches.delete(key))))
-      .then(() => self.clients.claim())
-  );
-});
+function keep(req, res) {
+  if (res && (res.ok || res.type === 'opaque')) {
+    const copy = res.clone();
+    caches.open(C).then(c => c.put(req, copy)).catch(() => {});
+  }
+  return res;
+}
 
-self.addEventListener('fetch', event => {
-  const request = event.request;
-  if (request.method !== 'GET') return;
-
-  const url = new URL(request.url);
-  const sameOrigin = url.origin === self.location.origin;
-
-  // Cache-first for the app shell; network responses are saved for later offline use.
-  if (sameOrigin) {
-    event.respondWith(
-      caches.match(request).then(cached => {
-        if (cached) return cached;
-        return fetch(request).then(response => {
-          if (response && response.ok) {
-            const copy = response.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(request, copy)).catch(() => {});
-          }
-          return response;
-        }).catch(() => caches.match('./index.html'));
-      })
-    );
+self.addEventListener('fetch', e => {
+  const r = e.request;
+  if (r.method !== 'GET') return;
+  const u = new URL(r.url);
+  if (CDN.includes(u.hostname)) {
+    e.respondWith(caches.match(r).then(m => m || fetch(r).then(res => keep(r, res))));
     return;
   }
-
-  // The XLSX and PDF libraries are hosted on CDN. Cache them after a successful
-  // online load so export tools remain available offline on later launches.
-  if (url.hostname === 'cdnjs.cloudflare.com' || url.hostname === 'www.gstatic.com') {
-    event.respondWith(
-      caches.match(request).then(cached => {
-        const network = fetch(request).then(response => {
-          if (response && response.ok) {
-            const copy = response.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(request, copy)).catch(() => {});
-          }
-          return response;
-        });
-        return cached || network.catch(() => Response.error());
-      })
-    );
+  if (u.origin !== self.location.origin) return; // واجهات Firebase وغيرها: الشبكة مباشرة
+  const shell = r.mode === 'navigate' || /(\/|\.html|\.webmanifest)$/.test(u.pathname);
+  if (shell) {
+    e.respondWith(fetch(r).then(res => keep(r, res)).catch(() => caches.match(r).then(m => m || caches.match('./index.html'))));
+    return;
   }
+  e.respondWith(caches.match(r).then(m => m || fetch(r).then(res => keep(r, res))));
 });
