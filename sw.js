@@ -4,7 +4,7 @@
 // - الأيقونات ومكتبات Firebase والتصدير (cdnjs وgstatic): من الكاش أولاً.
 // - واجهات Firebase نفسها تذهب إلى الشبكة دائماً ولا تُخزَّن.
 // عند كل نشر لنسخة جديدة غيّر رقم الكاش أدناه (مثلاً qty-v18).
-const C = 'qty-v18';
+const C = 'qty-v19';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png'];
 const CDN = ['www.gstatic.com', 'cdnjs.cloudflare.com'];
 

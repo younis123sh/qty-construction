@@ -2437,7 +2437,7 @@ itemsHTML = function() {
 render = function() {
   ensurePA();
   nav();
-  const V = { home: homeHTML, drafts: draftsHTML, set: setHTML, proj: projHTML, items: itemsHTML, pa: paHTML, smart: smartHTML, sum: sumHTML };
+  const V = { home: homeHTML, drafts: draftsHTML, set: setHTML, proj: projHTML, items: itemsHTML, pa: paHTML, prices: pricesHTML, smart: smartHTML, sum: sumHTML };
   $('#main').innerHTML = V[CUR.v]();
   updRes();
   updPx();
