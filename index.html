@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="حصر الكميات">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#15181a"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>حصر كميات QOB</title>
+<title>حصر كميات وتحليل أسعار QOB</title>
 <style>
 :root{box-sizing:border-box;--hdr:#212529;--navy:#0f766e;--navy2:#0d9488;--gold2:#24aea6;--gold:#0f766e;--head:#0b5f5a;--bg:#edf4f3;--card:#ffffff;--field:#ffffff;--ink:#14191c;--mut:#4a5b5f;--line:#cbdcd9;--warn:#e2f4f1;--mrow:#d3efeb;--mrowInk:#07443f;--bad:#b42318;--sh:0 4px 14px rgba(20,30,32,.10);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--hdr:#15181a;--navy:#17958b;--navy2:#24aea6;--gold2:#24aea6;--gold:#24aea6;--head:#7fded5;--bg:#101315;--card:#1b1f22;--field:#101315;--ink:#e7f2f1;--mut:#9db3b1;--line:#2c3a3c;--warn:#15302e;--mrow:#143f3b;--mrowInk:#c7f3ee;--bad:#f08a80;--sh:0 4px 14px rgba(0,0,0,.45);color-scheme:dark}}
@@ -68,10 +68,38 @@ tr.mrow td{background:var(--mrow);font-weight:700;color:var(--mrowInk)}
 #toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--hdr);color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;display:none;box-shadow:var(--sh);z-index:20}
 .tag{display:inline-block;background:#d3efeb;color:#07443f;border-radius:8px;padding:0 8px;font-size:11px;margin-inline-start:6px}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}.chips button{padding:6px 10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;cursor:pointer}.chips button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+
+.pa-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px;margin:10px 0}
+.pa-kpi{background:var(--card);border:1px solid var(--line);border-right:4px solid var(--navy);border-radius:12px;padding:10px}
+.pa-kpi.hi{background:var(--mrow);border-right-color:var(--gold2)}
+.pa-kpi small{display:block;font-size:11px;color:var(--mut)}
+.pa-kpi b{font-size:15px;color:var(--head)}
+.pa-pill{display:inline-block;background:var(--mrow);color:var(--mrowInk);border-radius:10px;padding:4px 10px;font-size:12px;font-weight:700}
+.pa-info{display:inline-block;background:var(--warn);color:var(--mut);border:1px dashed var(--line);border-radius:8px;padding:2px 8px;font-size:11px;font-weight:700}
+.pa-inp{width:78px!important;padding:6px!important;text-align:center;font-size:13px!important}
+.pa-sel{padding:6px!important;font-size:12px!important;max-width:230px}
+.opts{grid-template-columns:repeat(2,1fr)}
+@media(min-width:600px){.opts{grid-template-columns:repeat(4,1fr)}}
+
+.ai-box{background:var(--card);border:2px solid var(--navy2);border-radius:14px;padding:12px;margin-bottom:12px;box-shadow:var(--sh)}
+.ai-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.ai-row input{flex:1;min-width:180px}
+.ai-mic{background:var(--navy2);color:#fff;border:0;border-radius:10px;padding:9px 12px;font-size:15px}
+.ai-mic.rec{background:var(--bad);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+.aud-item{padding:8px 10px;border-radius:10px;margin:6px 0;font-size:13px;border-right:4px solid var(--navy);background:var(--bg)}
+.aud-item.warn{border-right-color:#d97706;background:#fffbeb;color:#78350f}
+.aud-item.bad{border-right-color:var(--bad);background:#fef2f2;color:#7f1d1d}
+.aud-item.ok{border-right-color:#0f766e;background:var(--warn);color:var(--mrowInk)}
+:root[data-theme="dark"] .aud-item.warn{background:#2d2208;color:#fde68a}
+:root[data-theme="dark"] .aud-item.bad{background:#2d1215;color:#fecaca}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .aud-item.warn{background:#2d2208;color:#fde68a}:root:not([data-theme="light"]) .aud-item.bad{background:#2d1215;color:#fecaca}}
+.sc-diff-pos{color:var(--bad);font-weight:700}
+.sc-diff-neg{color:#0f766e;font-weight:700}
 </style>
 </head>
 <body>
-<header><h1>حصر كميات QOB</h1><nav id="nav"></nav></header>
+<header><h1>حصر كميات وتحليل أسعار QOB</h1><nav id="nav"></nav></header>
 <main id="main"></main>
 <div id="toast"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -433,7 +461,7 @@ function restore(){let d=null,s=null;try{d=JSON.parse(localStorage.getItem('qty-
  D=blank();const o=(d&&d.D)||{};MODS.forEach(k=>D[k]=o[k]||[]);cleanLegacy();Object.assign(D.gf,o.gf||{});
  if(o.gf){D.gf.tf=o.gf.fl||D.gf.tf;D.gf.tw=o.gf.wl||D.gf.tw}
  if(o.proj)D.proj=Object.assign(D.proj,o.proj,{mains:Object.assign(DEF_MAINS(),(o.proj&&o.proj.mains)||{})});
- D.px=o.px||{};D.extWin=!!o.extWin;D.extDedM=o.extDedM||0;D.wdx=Object.assign({pw:false,pdw:false,tw:false},o.wdx||{});D.dig=Object.assign(blank().dig,o.dig||{});D.ded=Object.assign(blank().ded,o.ded||{});
+ D.px=o.px||{};D.pa=o.pa||{};D.paSet=o.paSet||null;D.extWin=!!o.extWin;D.extDedM=o.extDedM||0;D.wdx=Object.assign({pw:false,pdw:false,tw:false},o.wdx||{});D.dig=Object.assign(blank().dig,o.dig||{});D.ded=Object.assign(blank().ded,o.ded||{});
  [].forEach(x=>{if(x.pl)D.pl.push(Object.assign({},x,{tk:x.tk||1.5}));if(x.pt)D.pt.push(Object.assign({},x));
   if(x.fl)D.tl.push(Object.assign({},x,{ty:x.ft||'برسلان',sub:'أرضيات',sz:x.fs||'60x60'}));
   if(x.wl)D.tl.push(Object.assign({},x,{ty:x.wt||'سراميك',sub:'جدران',sz:x.ws||'30x60'}))});
@@ -674,6 +702,1813 @@ document.body.addEventListener('input',e=>{const t=e.target;
  if(t.dataset.s){const p=t.dataset.s.split('.'),v=num(t.value);if(p.length===1)S[p[0]]=v;else S[p[0]][+p[1]]=v;save();return}
  if(t.dataset.px!==undefined){const r=boq()[+t.dataset.px];if(r&&r.key){D.px[r.key]=num(t.value);save();updPx()}}
 });
+
+/*PRICE_ANALYSIS_V2_INTEGRATION*/
+const PA_CAT_KEY = 'qty-pa-catalog-v1';
+const PA_PRESETS_KEY = 'qty-pa-presets-v1';
+const PA_CAT_DEF = {"materials": [{"code": "M-001", "group": "الإسمنت", "spec": "إسمنت نجران (50 كجم)", "unit": "كيس", "price": 20.0}, {"code": "M-002", "group": "الإسمنت", "spec": "إسمنت حضرموت (50 كجم)", "unit": "كيس", "price": 19.0}, {"code": "M-003", "group": "الإسمنت", "spec": "إسمنت العربية (50 كجم)", "unit": "كيس", "price": 21.0}, {"code": "M-004", "group": "الإسمنت", "spec": "إسمنت أبيض للترويب", "unit": "كيس", "price": 35.0}, {"code": "M-005", "group": "الرمل", "spec": "رمل مغربل نظيف (للخرسانة واللياسة)", "unit": "م³", "price": 42.0}, {"code": "M-006", "group": "الرمل", "spec": "رمل غير مغربل (للمباني والردم)", "unit": "م³", "price": 32.0}, {"code": "M-007", "group": "الكري", "spec": "كري أسود (للخرسانة)", "unit": "م³", "price": 105.0}, {"code": "M-008", "group": "الكري", "spec": "كري أبيض", "unit": "م³", "price": 85.0}, {"code": "M-009", "group": "الكري", "spec": "شلف / هلسن للأرضيات والبلاط", "unit": "م³", "price": 45.0}, {"code": "M-010", "group": "حديد التسليح", "spec": "حديد تركي جريد 60", "unit": "طن", "price": 2950.0}, {"code": "M-011", "group": "حديد التسليح", "spec": "حديد تركي جريد 40", "unit": "طن", "price": 2800.0}, {"code": "M-012", "group": "حديد التسليح", "spec": "حديد سعودي (سابك/الراجحي) جريد 60", "unit": "طن", "price": 3100.0}, {"code": "M-013", "group": "حديد التسليح", "spec": "حديد سعودي جريد 40", "unit": "طن", "price": 2950.0}, {"code": "M-014", "group": "أسلاك تربيط", "spec": "سلك تربيط مجلفن", "unit": "كجم", "price": 6.0}, {"code": "M-015", "group": "الماء", "spec": "ماء حلو للصب والرش", "unit": "م³", "price": 8.0}, {"code": "M-016", "group": "خرسانة جاهزة", "spec": "خلاطة مركزية 6 أكياس (C20)", "unit": "م³", "price": 230.0}, {"code": "M-017", "group": "خرسانة جاهزة", "spec": "خلاطة مركزية 7 أكياس (C25)", "unit": "م³", "price": 260.0}, {"code": "M-018", "group": "خرسانة جاهزة", "spec": "خلاطة مركزية 8 أكياس (C30)", "unit": "م³", "price": 290.0}, {"code": "M-019", "group": "تربة الردم", "spec": "تربة ردم صالحة للدك", "unit": "م³", "price": 15.0}, {"code": "M-020", "group": "الحجر", "spec": "حجر أسود بازلت مربوع", "unit": "م³", "price": 140.0}, {"code": "M-021", "group": "الحجر", "spec": "حجر مثاني (تعبئة)", "unit": "م³", "price": 90.0}, {"code": "M-046", "group": "الحجر", "spec": "حجر جعم / كرسي", "unit": "م³", "price": 75.0}, {"code": "M-022", "group": "البلك", "spec": "بلك أوتوماتيكي 40×20×20", "unit": "حبة", "price": 3.3}, {"code": "M-023", "group": "البلك", "spec": "بلك أوتوماتيكي 40×20×15", "unit": "حبة", "price": 2.7}, {"code": "M-024", "group": "البلك", "spec": "بلك عادي 40×20×10", "unit": "حبة", "price": 1.5}, {"code": "M-025", "group": "البلك", "spec": "بلك هوردي 40×20×20", "unit": "حبة", "price": 3.5}, {"code": "M-026", "group": "مواد اللياسة", "spec": "شبك فواصل لياسة", "unit": "لفة", "price": 18.0}, {"code": "M-027", "group": "الدهانات", "spec": "ورق صنفرة", "unit": "عدد", "price": 2.0}, {"code": "M-028", "group": "الدهانات", "spec": "معجون دهان (برميل 18 كجم)", "unit": "برميل", "price": 35.0}, {"code": "M-029", "group": "الدهانات", "spec": "دهان أساس / برايمر (برميل 20 كجم)", "unit": "برميل", "price": 55.0}, {"code": "M-030", "group": "الدهانات", "spec": "دهان زيتي لماع داخلي (برميل)", "unit": "برميل", "price": 180.0}, {"code": "M-031", "group": "الدهانات", "spec": "دهان أملشن أبيض للسقوف (برميل)", "unit": "برميل", "price": 140.0}, {"code": "M-032", "group": "الدهانات", "spec": "دهان خارجي مقاوم للعوامل الجوية (برميل)", "unit": "برميل", "price": 220.0}, {"code": "M-033", "group": "الدهانات", "spec": "تينر مخفف (دبة 5 لتر)", "unit": "دبة", "price": 15.0}, {"code": "M-034", "group": "البلاط والأرضيات", "spec": "بلاط موزايكو 25×25", "unit": "م²", "price": 28.0}, {"code": "M-035", "group": "البلاط والأرضيات", "spec": "بلاط قيشاني جدران 20×30", "unit": "م²", "price": 32.0}, {"code": "M-036", "group": "البلاط والأرضيات", "spec": "بلاط سيراميك أرضيات", "unit": "م²", "price": 30.0}, {"code": "M-037", "group": "البلاط والأرضيات", "spec": "بلاط بورسلان 60×60", "unit": "م²", "price": 55.0}, {"code": "M-038", "group": "البلاط والأرضيات", "spec": "درج موزايكو / رخام", "unit": "م.ط", "price": 45.0}, {"code": "M-039", "group": "البلاط والأرضيات", "spec": "نعلة / وزرة سيراميك 10 سم", "unit": "م.ط", "price": 6.0}, {"code": "M-040", "group": "البلاط والأرضيات", "spec": "بلاط أسطح أسمنتي", "unit": "م²", "price": 18.0}, {"code": "M-047", "group": "البلاط والأرضيات", "spec": "بلاط رصيف إنترلوك", "unit": "م²", "price": 35.0}, {"code": "M-041", "group": "العزل", "spec": "بيتومين / إسفلت سائل (برميل)", "unit": "برميل", "price": 280.0}, {"code": "M-042", "group": "العزل", "spec": "لفائف عزل مائي 4 مم (10 م²)", "unit": "لفة", "price": 85.0}, {"code": "M-043", "group": "العزل", "spec": "ديزل / غاز تسخين", "unit": "لتر", "price": 3.5}, {"code": "M-044", "group": "العزل", "spec": "ألواح فلين عازل حراري", "unit": "م²", "price": 12.0}, {"code": "M-045", "group": "العزل", "spec": "شبك حديد مربعات", "unit": "م²", "price": 8.0}, {"code": "M-048", "group": "النوافذ والأبواب", "spec": "نافذة ألمنيوم دبل جلاس (توريد وتركيب)", "unit": "م²", "price": 280.0}, {"code": "M-049", "group": "النوافذ والأبواب", "spec": "باب قياسي مع الحلق (توريد وتركيب)", "unit": "حبة", "price": 650.0}], "labor": [{"code": "E-001", "group": "الحفر والردم والمعدات", "spec": "أجور شيول (حفر / تسوية)", "unit": "ساعة", "price": 170.0}, {"code": "E-002", "group": "الحفر والردم والمعدات", "spec": "أجور دكاك (رصاصة / هزاز)", "unit": "ساعة", "price": 120.0}, {"code": "E-003", "group": "الحفر والردم والمعدات", "spec": "أجور قلاب (نقل مخلفات)", "unit": "م³", "price": 7.0}, {"code": "E-004", "group": "الحفر والردم والمعدات", "spec": "أجور نقل وتشوين مواد", "unit": "حملة", "price": 50.0}, {"code": "L-001", "group": "الحفر والردم والمعدات", "spec": "أجر عامل عادي (يومية)", "unit": "يومية", "price": 50.0}, {"code": "L-003", "group": "الحفر والردم والمعدات", "spec": "مقطوعية حفر شاملة", "unit": "م³", "price": 18.0}, {"code": "L-004", "group": "الحفر والردم والمعدات", "spec": "مقطوعية ردم ودك شاملة", "unit": "م³", "price": 15.0}, {"code": "L-005", "group": "الخرسانة العادية", "spec": "أجور صبة خرسانة عادية (م³)", "unit": "م³", "price": 45.0}, {"code": "L-006", "group": "الخرسانة العادية", "spec": "أجور صبة خرسانة أرضيات (م²)", "unit": "م²", "price": 9.0}, {"code": "L-007", "group": "القواعد والأساسات", "spec": "أجور نجارة القواعد", "unit": "م³", "price": 90.0}, {"code": "L-008", "group": "القواعد والأساسات", "spec": "أجور حدادة القواعد", "unit": "م³", "price": 40.0}, {"code": "L-009", "group": "القواعد والأساسات", "spec": "أجور صبة القواعد", "unit": "م³", "price": 45.0}, {"code": "L-013", "group": "القواعد والأساسات", "spec": "مقطوعية نجارة وحدادة وصبة الميدة", "unit": "م³", "price": 180.0}, {"code": "L-010", "group": "الأعمدة والرقاب", "spec": "أجور نجارة الأعمدة والرقاب", "unit": "م³", "price": 100.0}, {"code": "L-011", "group": "الأعمدة والرقاب", "spec": "أجور حدادة الأعمدة والرقاب", "unit": "م³", "price": 70.0}, {"code": "L-012", "group": "الأعمدة والرقاب", "spec": "أجور صبة الأعمدة والرقاب", "unit": "م³", "price": 55.0}, {"code": "L-014", "group": "السقوف والجسور", "spec": "أجور نجارة السقوف والجسور", "unit": "م³", "price": 85.0}, {"code": "L-015", "group": "السقوف والجسور", "spec": "أجور حدادة السقوف والجسور", "unit": "م³", "price": 55.0}, {"code": "L-016", "group": "السقوف والجسور", "spec": "أجور صبة السقوف والجسور", "unit": "م³", "price": 45.0}, {"code": "L-017", "group": "السقوف والجسور", "spec": "مقطوعية نجارة وحدادة وصبة هوردي", "unit": "م³", "price": 195.0}, {"code": "L-018", "group": "السقوف والجسور", "spec": "أجور رش ومعالجة الخرسانة", "unit": "م³", "price": 5.0}, {"code": "L-019", "group": "المباني (بلك وحجر)", "spec": "أجور بناء حجر بازلت مربوع", "unit": "م²", "price": 45.0}, {"code": "L-020", "group": "المباني (بلك وحجر)", "spec": "أجور بناء كرسي حجر / جعم", "unit": "م³", "price": 70.0}, {"code": "L-021", "group": "المباني (بلك وحجر)", "spec": "أجور بناء بلك أسمنتي", "unit": "م²", "price": 9.0}, {"code": "L-022", "group": "اللياسة والدهان", "spec": "أجور تلبيس (لياسة) قدة", "unit": "م²", "price": 8.0}, {"code": "L-023", "group": "اللياسة والدهان", "spec": "أجور تلبيس (لياسة) أوتار وبؤج", "unit": "م²", "price": 12.0}, {"code": "L-025", "group": "اللياسة والدهان", "spec": "أجور دهان داخلي / خارجي", "unit": "م²", "price": 7.0}, {"code": "L-026", "group": "البلاط والعزل", "spec": "أجور تركيب بلاط موزايكو / أسطح", "unit": "م²", "price": 12.0}, {"code": "L-027", "group": "البلاط والعزل", "spec": "أجور تركيب بلاط قيشاني / سيراميك", "unit": "م²", "price": 16.0}, {"code": "L-028", "group": "البلاط والعزل", "spec": "أجور تركيب بلاط بورسلان / رخام", "unit": "م²", "price": 25.0}, {"code": "L-030", "group": "البلاط والعزل", "spec": "أجور تركيب نعلة / وزرة", "unit": "م.ط", "price": 4.0}, {"code": "L-034", "group": "البلاط والعزل", "spec": "أجور تركيب رصيف إنترلوك", "unit": "م²", "price": 18.0}, {"code": "L-031", "group": "البلاط والعزل", "spec": "أجور تنفيذ عزل مائي", "unit": "م²", "price": 8.0}], "mixes": [{"code": "MIX-5B", "ratio": "5 أكياس", "desc": "خرسانة نظافة خفيفة (250 كجم إسمنت)", "cement": 5.0, "sand": 0.4, "agg": 0.8}, {"code": "MIX-6B", "ratio": "6 أكياس", "desc": "خرسانة عادية / أرضيات (300 كجم إسمنت)", "cement": 6.0, "sand": 0.4, "agg": 0.8}, {"code": "MIX-7B", "ratio": "7 أكياس", "desc": "خرسانة مسلحة: قواعد / ميد / سقوف (350 كجم)", "cement": 7.0, "sand": 0.4, "agg": 0.8}, {"code": "MIX-8B", "ratio": "8 أكياس", "desc": "خرسانة مسلحة: أعمدة / رقاب (400 كجم)", "cement": 8.0, "sand": 0.4, "agg": 0.8}, {"code": "MIX-136", "ratio": "1:3:6", "desc": "نسبة حجمية قياسية (M10)", "cement": 4.4, "sand": 0.462, "agg": 0.924}, {"code": "MIX-124", "ratio": "1:2:4", "desc": "نسبة حجمية قياسية (M15)", "cement": 6.29, "sand": 0.44, "agg": 0.88}, {"code": "MIX-123", "ratio": "1:2:3", "desc": "نسبة حجمية قياسية (~C20-C25)", "cement": 7.33, "sand": 0.513, "agg": 0.77}, {"code": "MIX-1153", "ratio": "1:1.5:3", "desc": "نسبة حجمية قياسية (C25)", "cement": 8.0, "sand": 0.42, "agg": 0.84}]};
+const PA_PSET_DEF = {"cement": "M-001", "sand": "M-005", "agg": "M-007", "steel": "M-010", "block": "M-022", "plasterLab": "L-022", "mixPlain": "5 أكياس", "mixFloor": "6 أكياس", "mixRein": "7 أكياس", "mixCol": "8 أكياس", "wastage": 5.0, "profit": 10.0, "overhead": 5.0, "rate": 1.0, "cur": "ر.س", "autoPrice": true, "presetName": ""};
+
+let PA_CAT = loadPACat();
+let PA_PRESETS = loadPAPresets();
+let PA_MAT_SEL = {};
+let PA_LAB_SEL = {};
+
+function loadPACat() {
+  try {
+    const s = JSON.parse(localStorage.getItem(PA_CAT_KEY) || 'null');
+    if (s && Array.isArray(s.materials) && Array.isArray(s.labor) && Array.isArray(s.mixes)) return s;
+  } catch (e) {}
+  return clone(PA_CAT_DEF);
+}
+function savePACat() {
+  try { localStorage.setItem(PA_CAT_KEY, JSON.stringify(PA_CAT)); } catch (e) {}
+}
+function loadPAPresets() {
+  try {
+    const s = JSON.parse(localStorage.getItem(PA_PRESETS_KEY) || '[]');
+    if (Array.isArray(s)) return s;
+  } catch (e) {}
+  return [];
+}
+function savePAPresets() {
+  try { localStorage.setItem(PA_PRESETS_KEY, JSON.stringify(PA_PRESETS)); } catch (e) {}
+}
+
+function ensurePA() {
+  if (!D.paSet) D.paSet = clone(PA_PSET_DEF);
+  else D.paSet = Object.assign(clone(PA_PSET_DEF), D.paSet);
+  if (!D.pa) D.pa = {};
+}
+
+function paResInfo(code) {
+  const m = PA_CAT.materials.find(x => x.code === code);
+  if (m) return { label: m.group + ' — ' + m.spec, unit: m.unit, price: +m.price || 0, isMat: true };
+  const l = PA_CAT.labor.find(x => x.code === code);
+  if (l) return { label: l.spec, unit: l.unit, price: +l.price || 0, isMat: false };
+  return { label: code, unit: '-', price: 0, isMat: false };
+}
+
+function paMix(ratio) {
+  return PA_CAT.mixes.find(x => x.ratio === ratio) || PA_CAT.mixes[0];
+}
+
+// Check if a BOQ line is informational-only (no price, avoids double-counting)
+function isInfoLine(x) {
+  const l = x.l || '', u = x.u || '';
+  if (l.includes('حديد تسليح')) return true; // مدمج داخل سعر م³ الخرسانة المسلحة
+  if (l.includes('بلك (شامل')) return true; // مدمج داخل سعر م² بناء جدران البلك
+  if (l.includes('حجر بناء (حجم)')) return true; // مدمج داخل سعر م² بناء الحجر
+  if (l.includes('نوافذ (عدد)')) return true; // تُسعّر النوافذ بالمتر المربع
+  if (l.includes('أبواب (مساحة)')) return true; // تُسعّر الأبواب بالعدد
+  return false;
+}
+
+// Calculate actual steel ratio (ton per m³) from the project's takeoff for each reinforced concrete line
+function actualSteelRatio(line) {
+  const T = totals(), W = 1 + (S.wst ?? 2.5) / 100;
+  const l = line.l || '', k = line.key || '';
+  const ratio = (st, conc, def) => (conc > 0 && st > 0) ? +(st * W / conc).toFixed(4) : def;
+  if (k.startsWith('القواعد المفردة')) { const M = ms('foot'); return ratio(M.steel, M.rein, 0.085); }
+  if (k.startsWith('القواعد المشتركة')) { const M = ms('sfoot'); return ratio(M.steel, M.rein, 0.10); }
+  if (k.startsWith('الشدادات')) { const M = ms('sh'); return ratio(M.steel, M.rein, 0.12); }
+  if (k.startsWith('الحصيرة')) { const M = ms('raft'); return ratio(M.steel, M.rein, 0.11); }
+  if (k.startsWith('الأعمدة')) { const M = ms('col'); return ratio(M.steel, M.rein, 0.16); }
+  if (k.startsWith('الرقاب')) { const M = ms('neck'); return ratio(M.steel, M.rein, 0.16); }
+  if (k.startsWith('الميدة')) { const M = ms('beam'); return ratio(M.steel, M.rein, 0.12); }
+  if (k.startsWith('الجسور للبلاطات')) return ratio(T.bS, T.bR, 0.13);
+  if (k.startsWith('البلاطة المصمتة')) return ratio(T.slab.steel0, T.slab.rein0, 0.11);
+  if (k.startsWith('الهردي باتجاه واحد')) return ratio(T.r1.steel0, T.r1.rein0, 0.12);
+  if (k.startsWith('الهردي باتجاهين')) return ratio(T.r2.steel0, T.r2.rein0, 0.13);
+  return 0.11;
+}
+
+function paDefaultRecipe(line) {
+  ensurePA();
+  const ps = D.paSet;
+  const l = line.l || '', u = line.u || '';
+
+  // خرسانة عادية أو صبة أرضيات أو خرسانة الجعم
+  if (l.includes('خرسانة عادية') || l.includes('صبة أرضيات') || l.includes('خرسانة الجعم')) {
+    return { mix: l.includes('أرضيات') ? ps.mixFloor : ps.mixPlain, resources: [
+      { code: ps.cement, norm: 0, mixRole: 'cement' },
+      { code: ps.sand, norm: 0, mixRole: 'sand' },
+      { code: ps.agg, norm: 0, mixRole: 'agg' },
+      { code: 'M-015', norm: 0.18, mixRole: null },
+      { code: 'L-005', norm: 1.0, mixRole: null }
+    ]};
+  }
+
+  // خرسانة مسلحة (شاملة الحديد بنسبة الحصر الفعلية + سلك التربيط + النجارة والحدادة والصبة والرش)
+  if (l.includes('خرسانة مسلحة')) {
+    const isCol = l.includes('الأعمدة') || l.includes('الرقاب');
+    const isSlab = l.includes('البلاطة') || l.includes('الهردي') || l.includes('أعصاب') || l.includes('جسور البلاطات');
+    const carp = isCol ? 'L-010' : (isSlab ? 'L-014' : 'L-007');
+    const fix  = isCol ? 'L-011' : (isSlab ? 'L-015' : 'L-008');
+    const pour = isCol ? 'L-012' : (isSlab ? 'L-016' : 'L-009');
+    const stRatio = actualSteelRatio(line);
+    return { mix: isCol ? ps.mixCol : ps.mixRein, resources: [
+      { code: ps.cement, norm: 0, mixRole: 'cement' },
+      { code: ps.sand, norm: 0, mixRole: 'sand' },
+      { code: ps.agg, norm: 0, mixRole: 'agg' },
+      { code: 'M-015', norm: 0.20, mixRole: null },
+      { code: ps.steel, norm: stRatio, mixRole: null, autoSteel: true },
+      { code: 'M-014', norm: +(stRatio * 12).toFixed(2), mixRole: null },
+      { code: carp, norm: 1.0, mixRole: null },
+      { code: fix, norm: 1.0, mixRole: null },
+      { code: pour, norm: 1.0, mixRole: null },
+      { code: 'L-018', norm: 1.0, mixRole: null }
+    ]};
+  }
+
+  if (l.includes('بلوك هوردي')) return { mix: null, resources: [{ code: 'M-025', norm: 1.0, mixRole: null }] };
+  if (l.includes('حفر')) return { mix: null, resources: [{ code: 'E-001', norm: 0.05, mixRole: null }, { code: 'E-003', norm: 1.0, mixRole: null }, { code: 'L-001', norm: 0.07, mixRole: null }] };
+  if (l.includes('ردم')) return { mix: null, resources: [{ code: 'E-001', norm: 0.02, mixRole: null }, { code: 'M-019', norm: 1.15, mixRole: null }, { code: 'E-002', norm: 0.025, mixRole: null }, { code: 'M-015', norm: 0.15, mixRole: null }, { code: 'L-001', norm: 0.015, mixRole: null }] };
+  if (l.includes('كرسي') || l.includes('جعم')) return { mix: null, resources: [{ code: 'M-046', norm: 1.05, mixRole: null }, { code: ps.cement, norm: 1.2, mixRole: null }, { code: ps.sand, norm: 0.25, mixRole: null }, { code: 'L-020', norm: 1.0, mixRole: null }] };
+  if (l.includes('جدران بلك')) return { mix: null, resources: [{ code: ps.block, norm: 12.5, mixRole: null }, { code: ps.cement, norm: 0.25, mixRole: null }, { code: ps.sand, norm: 0.03, mixRole: null }, { code: 'M-015', norm: 0.03, mixRole: null }, { code: 'L-021', norm: 1.0, mixRole: null }] };
+  if (l.includes('حجر')) return { mix: null, resources: [{ code: 'M-020', norm: 0.25, mixRole: null }, { code: ps.cement, norm: 0.67, mixRole: null }, { code: ps.sand, norm: 0.09, mixRole: null }, { code: 'L-019', norm: 1.0, mixRole: null }] };
+  if (l.includes('تلابيس')) return { mix: null, resources: [{ code: ps.cement, norm: 0.25, mixRole: null }, { code: ps.sand, norm: 0.03, mixRole: null }, { code: 'M-015', norm: 0.03, mixRole: null }, { code: 'M-026', norm: 0.05, mixRole: null }, { code: ps.plasterLab, norm: 1.0, mixRole: null }] };
+  if (l.includes('دهان') || l.includes('رشة')) {
+    const isExt = l.includes('خارجية'), isCeil = l.includes('سقوف');
+    return { mix: null, resources: [{ code: 'M-027', norm: 0.04, mixRole: null }, { code: 'M-028', norm: 0.04, mixRole: null }, { code: 'M-029', norm: 0.015, mixRole: null }, { code: isExt ? 'M-032' : (isCeil ? 'M-031' : 'M-030'), norm: 0.025, mixRole: null }, { code: 'L-025', norm: 1.0, mixRole: null }] };
+  }
+  if (l.includes('بلاط')) {
+    const mat = l.includes('برسلان') ? 'M-037' : (l.includes('موازيك') ? 'M-034' : (l.includes('جدران') ? 'M-035' : 'M-036'));
+    const lab = l.includes('برسلان') ? 'L-028' : (l.includes('موازيك') ? 'L-026' : 'L-027');
+    return { mix: null, resources: [{ code: mat, norm: 1.05, mixRole: null }, { code: ps.cement, norm: 0.25, mixRole: null }, { code: ps.sand, norm: 0.04, mixRole: null }, { code: 'M-004', norm: 0.03, mixRole: null }, { code: lab, norm: 1.0, mixRole: null }] };
+  }
+  if (l.includes('نعلة')) return { mix: null, resources: [{ code: 'M-039', norm: 1.05, mixRole: null }, { code: ps.cement, norm: 0.025, mixRole: null }, { code: ps.sand, norm: 0.003, mixRole: null }, { code: 'L-030', norm: 1.0, mixRole: null }] };
+  if (l.includes('رصف')) return { mix: null, resources: [{ code: 'M-047', norm: 1.05, mixRole: null }, { code: ps.sand, norm: 0.05, mixRole: null }, { code: 'L-034', norm: 1.0, mixRole: null }] };
+  if (l.includes('نوافذ')) return { mix: null, resources: [{ code: 'M-048', norm: 1.0, mixRole: null }] };
+  if (l.includes('أبواب')) return { mix: null, resources: [{ code: 'M-049', norm: 1.0, mixRole: null }] };
+  return { mix: null, resources: [{ code: 'L-001', norm: 1.0, mixRole: null }] };
+}
+
+function paGetRecipe(line) {
+  ensurePA();
+  if (!D.pa[line.key]) D.pa[line.key] = paDefaultRecipe(line);
+  return D.pa[line.key];
+}
+
+function paCalcLine(line) {
+  ensurePA();
+  const ps = D.paSet;
+  const rec = paGetRecipe(line);
+  const mixObj = rec.mix ? paMix(rec.mix) : null;
+  let directUnit = 0;
+  const rows = rec.resources.map(r => {
+    const info = paResInfo(r.code);
+    let norm = (r.mixRole && mixObj) ? (+mixObj[r.mixRole] || 0) : (+r.norm || 0);
+    if (r.autoSteel) norm = actualSteelRatio(line);
+    const unitCost = norm * info.price;
+    directUnit += unitCost;
+    return Object.assign({}, r, { info, norm, unitCost, totalQty: norm * line.q, totalCost: unitCost * line.q });
+  });
+  const pct = ((+ps.wastage || 0) + (+ps.profit || 0) + (+ps.overhead || 0)) / 100;
+  const rate = +ps.rate || 1;
+  const finalUnit = directUnit * (1 + pct);
+  return {
+    rec, rows,
+    directUnit: directUnit * rate,
+    directTotal: directUnit * line.q * rate,
+    finalUnit: finalUnit * rate,
+    finalTotal: finalUnit * line.q * rate
+  };
+}
+
+function paResOpts(selCode) {
+  return '<optgroup label="المواد">' +
+    PA_CAT.materials.map(m => `<option value="${m.code}" ${m.code===selCode?'selected':''}>${esc(m.group)} — ${esc(m.spec)}</option>`).join('') +
+    '</optgroup><optgroup label="العمالة والمعدات">' +
+    PA_CAT.labor.map(l => `<option value="${l.code}" ${l.code===selCode?'selected':''}>${esc(l.group)} — ${esc(l.spec)}</option>`).join('') +
+    '</optgroup>';
+}
+
+// Override boq() with informational-line handling (zero double-counting)
+boq = function() {
+  ensurePA();
+  const T = totals(), R = [], ps = D.paSet;
+  let G = 0, mi = 0;
+  MAIN.forEach(m => {
+    if (!D.proj.mains[m.k]) return;
+    mi++;
+    R.push({ t: 'main', n: mi, l: m.t });
+    let st = 0, c = 0;
+    m.subs.forEach(s => {
+      const L = lines(s, T);
+      if (!L.length) return;
+      R.push({ t: 'sub', l: MOD[s].t });
+      L.forEach(x => {
+        const infoOnly = isInfoLine(x);
+        let p = 0;
+        if (!infoOnly) {
+          if (D.px[x.key] !== undefined && D.px[x.key] !== '' && +D.px[x.key] > 0) p = +D.px[x.key];
+          else if (ps.autoPrice) p = +paCalcLine(x).finalUnit.toFixed(2);
+        }
+        const amt = infoOnly ? 0 : (x.q * p);
+        st += amt;
+        R.push({ t: 'line', n: mi + '.' + (++c), l: x.l, u: x.u, q: x.q, p, key: x.key, amt, infoOnly });
+      });
+    });
+    R.push({ t: 'tot', l: 'إجمالي ' + m.t, amt: st });
+    G += st;
+  });
+  R.push({ t: 'grand', l: 'الإجمالي العام', amt: G });
+  return R;
+};
+
+// Override boqHTML to clearly show (للمعلومية) for informational lines
+boqHTML = function(ro) {
+  const R = boq();
+  let h = '<table><tr><th>الرقم</th><th>البند</th><th>الوحدة</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th></tr>';
+  R.forEach((r, i) => {
+    if (r.t === 'main') h += `<tr class=mrow><td>${r.n}</td><td colspan=5 class=r>${r.l}</td></tr>`;
+    else if (r.t === 'sub') h += `<tr><td></td><td colspan=5 class=r><i>${r.l}</i></td></tr>`;
+    else if (r.t === 'line') {
+      if (r.infoOnly) {
+        h += `<tr style="opacity:0.8"><td>${r.n}</td><td class=r>${r.l} <span class=pa-info>للمعلومية فقط</span></td><td>${r.u}</td><td>${f2(r.q)}</td><td>—</td><td>—</td></tr>`;
+      } else {
+        h += `<tr><td>${r.n}</td><td class=r>${r.l}</td><td>${r.u}</td><td>${f2(r.q)}</td><td>${ro ? f2(r.p) : `<input type=number step=any data-px="${i}" value="${r.p}" style="width:80px">`}</td><td id="a${i}">${f0(r.amt)}</td></tr>`;
+      }
+    } else h += `<tr><th colspan=5 class=r>${r.l}</th><th id="a${i}">${f0(r.amt)}</th></tr>`;
+  });
+  return h + '</table>';
+};
+
+function grpOpts(list, grpName, selCode) {
+  return list.filter(x => x.group === grpName).map(x => `<option value="${x.code}" ${x.code===selCode?'selected':''}>${esc(x.spec)} (${x.price} ر.س)</option>`).join('');
+}
+
+function mixOpts(selRatio) {
+  return PA_CAT.mixes.map(m => `<option value="${m.ratio}" ${m.ratio===selRatio?'selected':''}>${m.ratio}</option>`).join('');
+}
+
+function paHTML() {
+  ensurePA();
+  const ps = D.paSet, cur = esc(ps.cur || 'ر.س');
+  const pricedLines = boq().filter(r => r.t === 'line' && !r.infoOnly);
+  let grandDirect = 0, grandFinal = 0;
+  const calcs = pricedLines.map(ln => {
+    const c = paCalcLine(ln);
+    grandDirect += c.directTotal;
+    grandFinal += c.finalTotal;
+    return { ln, c };
+  });
+  const wVal = grandDirect * (+ps.wastage || 0) / 100;
+  const oVal = grandDirect * (+ps.overhead || 0) / 100;
+  const pVal = grandDirect * (+ps.profit || 0) / 100;
+  const totPct = (+ps.wastage || 0) + (+ps.overhead || 0) + (+ps.profit || 0);
+
+  let h = `<div class=card>
+    <div class=tools style="justify-content:space-between;margin-top:0">
+      <b>إعدادات المشروع وقوالب التسعير</b>
+      <button class=btn data-pa-save-preset=1>حفظ الإعدادات كقالب باسم</button>
+    </div>
+    <div class=tools>
+      <label style="flex:1;min-width:190px">استدعاء قالب محفوظ لمشروع آخر:
+        <select data-pa-load-preset=1>
+          <option value="">— اختر قالباً محفوظاً (${PA_PRESETS.length}) —</option>
+          ${PA_PRESETS.map((pr, i) => `<option value="${i}" ${pr.name===ps.presetName?'selected':''}>${esc(pr.name)}</option>`).join('')}
+        </select>
+      </label>
+      ${PA_PRESETS.length ? `<button class=del data-pa-del-preset=1>حذف القالب المختار</button>` : ''}
+    </div>
+    <div class=grid>
+      <label>نوع الإسمنت<select data-pset="cement">${grpOpts(PA_CAT.materials, 'الإسمنت', ps.cement)}</select></label>
+      <label>نوع الرمل<select data-pset="sand">${grpOpts(PA_CAT.materials, 'الرمل', ps.sand)}</select></label>
+      <label>نوع الكري<select data-pset="agg">${grpOpts(PA_CAT.materials, 'الكري', ps.agg)}</select></label>
+      <label>نوع الحديد<select data-pset="steel">${grpOpts(PA_CAT.materials, 'حديد التسليح', ps.steel)}</select></label>
+      <label>نوع البلك<select data-pset="block">${grpOpts(PA_CAT.materials, 'البلك', ps.block)}</select></label>
+      <label>مصنعية اللياسة<select data-pset="plasterLab">${grpOpts(PA_CAT.labor, 'اللياسة والدهان', ps.plasterLab)}</select></label>
+    </div>
+    <div class=grid>
+      <label>خلطة النظافة<select data-pset="mixPlain">${mixOpts(ps.mixPlain)}</select></label>
+      <label>خلطة الأرضيات<select data-pset="mixFloor">${mixOpts(ps.mixFloor)}</select></label>
+      <label>خلطة القواعد والسقوف<select data-pset="mixRein">${mixOpts(ps.mixRein)}</select></label>
+      <label>خلطة الأعمدة والرقاب<select data-pset="mixCol">${mixOpts(ps.mixCol)}</select></label>
+      <label>سعر الصرف (مقابل 1 ر.س)<input type=number step=any data-pset="rate" value="${ps.rate}"></label>
+      <label>رمز العملة<input data-pset="cur" value="${cur}"></label>
+    </div>
+    <div class=grid>
+      <label>نسبة الهدر %<input type=number step=any data-pset="wastage" value="${ps.wastage}"></label>
+      <label>نسبة الأرباح %<input type=number step=any data-pset="profit" value="${ps.profit}"></label>
+      <label>الإشراف والإدارية %<input type=number step=any data-pset="overhead" value="${ps.overhead}"></label>
+    </div>
+    <div class=tools style="margin-bottom:0">
+      <button class=btn data-pa-apply-pset=1>تطبيق إعدادات المشروع على البنود</button>
+      <button class=ghost data-tab="prices">تعديل أسعار المواد والعمالة</button>
+      <label class=chk style="margin:0;padding:6px 10px"><input type=checkbox data-pset="autoPrice" ${ps.autoPrice?'checked':''}> ربط الأسعار بالخلاصة</label>
+    </div>
+  </div>`;
+
+  h += `<div class=pa-kpis>
+    <div class=pa-kpi><small>التكلفة المباشرة</small><b>${f0(grandDirect)} ${cur}</b></div>
+    <div class=pa-kpi><small>الهدر (${ps.wastage}%)</small><b>${f0(wVal)} ${cur}</b></div>
+    <div class=pa-kpi><small>الإشراف والإدارية (${ps.overhead}%)</small><b>${f0(oVal)} ${cur}</b></div>
+    <div class=pa-kpi><small>الأرباح (${ps.profit}%)</small><b>${f0(pVal)} ${cur}</b></div>
+    <div class="pa-kpi hi"><small>الإجمالي النهائي (${f2(totPct)}%+)</small><b>${f0(grandFinal)} ${cur}</b></div>
+  </div>`;
+
+  if (!calcs.length) {
+    return h + '<p class=note>لا توجد بنود محصورة بعد. أضف كميات من تبويب «البنود» لتظهر هنا وتُحلَّل أسعارها تلقائياً (مع دمج الحديد داخل الخرسانة المسلحة).</p>';
+  }
+
+  calcs.forEach(({ ln, c }) => {
+    const keyEnc = esc(ln.key);
+    const mixSel = c.rec.mix ? `<label style="display:inline-flex;flex-direction:row;align-items:center;gap:6px">الخلطة:<select class=pa-sel data-pamix="${keyEnc}">${mixOpts(c.rec.mix)}</select></label>` : '';
+    h += `<div class=card>
+      <div class=tools style="justify-content:space-between;margin-top:0">
+        <div><span class=tag>${ln.n}</span> <b>${esc(ln.l)}</b> <small style="color:var(--mut)">(${f2(ln.q)} ${ln.u})</small></div>
+        <div class=pa-pill>مباشر: ${f2(c.directUnit)} | نهائي: ${f2(c.finalUnit)} ${cur}/${ln.u}</div>
+      </div>
+      ${mixSel ? `<div class=tools>${mixSel}</div>` : ''}
+      <div style="overflow-x:auto"><table>
+        <tr><th class=r>المادة / العمالة / المعدة</th><th>الوحدة</th><th>المعدل</th><th>السعر</th><th>الإجمالي</th><th></th></tr>
+        ${c.rows.map((r, ri) => `<tr>
+          <td class=r><select class=pa-sel data-parcode="${keyEnc}" data-ri="${ri}">${paResOpts(r.code)}</select>${r.mixRole?' <span class=tag>خلطة</span>':(r.autoSteel?' <span class=tag>من الحصر</span>':'')}</td>
+          <td>${r.info.unit}</td>
+          <td>${r.mixRole ? `<b>${f3(r.norm)}</b>` : `<input type=number step=any class=pa-inp data-parnorm="${keyEnc}" data-ri="${ri}" value="${r.norm}">`}</td>
+          <td>${f2(r.info.price * (+ps.rate||1))}</td>
+          <td><b>${f0(r.totalCost * (+ps.rate||1))}</b></td>
+          <td><button class=del style="padding:4px 8px" data-pardel="${keyEnc}" data-ri="${ri}">×</button></td>
+        </tr>`).join('')}
+      </table></div>
+      <div class=tools style="margin-bottom:0">
+        <button class=ghost style="padding:5px 10px;font-size:12px" data-paradd="${keyEnc}">+ إضافة مورد</button>
+        <small style="color:var(--mut)">إجمالي البند النهائي: <b>${f0(c.finalTotal)} ${cur}</b></small>
+      </div>
+    </div>`;
+  });
+  return h;
+}
+
+let PRICES_SUB = 'mat';
+function pricesHTML() {
+  const chips = `<div class=chips>
+    <button class="${PRICES_SUB==='mat'?'on':''}" data-psub="mat">أسعار المواد (مختصر)</button>
+    <button class="${PRICES_SUB==='lab'?'on':''}" data-psub="lab">العمالة والمعدات (مختصر)</button>
+    <button class="${PRICES_SUB==='mix'?'on':''}" data-psub="mix">نسب خلط الخرسانة</button>
+  </div>`;
+
+  if (PRICES_SUB === 'mat') {
+    const groups = [...new Set(PA_CAT.materials.map(m => m.group))];
+    return chips + `<div class=card>
+      <div class=tools style="justify-content:space-between;margin-top:0">
+        <b>إعدادات أسعار المواد (المادة | النوعية | السعر)</b>
+        <button class=btn data-addmat=1>+ مادة / نوعية جديدة</button>
+      </div>
+      <p class=note>اختر النوعية من القائمة وعدّل سعرها — يُحفظ التعديل تلقائياً وبشكل دائم لكل نوعية ولا يضيع مع إعادة الإعدادات.</p>
+      <div style="overflow-x:auto"><table>
+        <tr><th class=r>المادة</th><th class=r>النوعية / المواصفة</th><th>الوحدة</th><th>السعر (ر.س)</th></tr>
+        ${groups.map(g => {
+          const items = PA_CAT.materials.filter(m => m.group === g);
+          const selCode = PA_MAT_SEL[g] || items[0].code;
+          const curItem = items.find(m => m.code === selCode) || items[0];
+          return `<tr>
+            <td class=r><b>${esc(g)}</b></td>
+            <td class=r><select class=pa-sel data-mg-sel="${esc(g)}">${items.map(it => `<option value="${it.code}" ${it.code===curItem.code?'selected':''}>${esc(it.spec)}</option>`).join('')}</select></td>
+            <td>${curItem.unit}</td>
+            <td><input type=number step=any class=pa-inp data-matcode="${curItem.code}" value="${curItem.price}"></td>
+          </tr>`;
+        }).join('')}
+      </table></div>
+    </div>`;
+  }
+
+  if (PRICES_SUB === 'lab') {
+    const groups = [...new Set(PA_CAT.labor.map(l => l.group))];
+    return chips + `<div class=card>
+      <div class=tools style="justify-content:space-between;margin-top:0">
+        <b>إعدادات أسعار العمالة والمعدات (البند | النوعية | السعر)</b>
+        <button class=btn data-addlab=1>+ عمالة / معدة جديدة</button>
+      </div>
+      <p class=note>اختر نوع العمالة أو المعدة وعدّل سعرها — يُحفظ تلقائياً بشكل دائم.</p>
+      <div style="overflow-x:auto"><table>
+        <tr><th class=r>البند / القسم</th><th class=r>نوع العمالة / المعدة</th><th>الوحدة</th><th>السعر (ر.س)</th></tr>
+        ${groups.map(g => {
+          const items = PA_CAT.labor.filter(l => l.group === g);
+          const selCode = PA_LAB_SEL[g] || items[0].code;
+          const curItem = items.find(l => l.code === selCode) || items[0];
+          return `<tr>
+            <td class=r><b>${esc(g)}</b></td>
+            <td class=r><select class=pa-sel data-lg-sel="${esc(g)}">${items.map(it => `<option value="${it.code}" ${it.code===curItem.code?'selected':''}>${esc(it.spec)}</option>`).join('')}</select></td>
+            <td>${curItem.unit}</td>
+            <td><input type=number step=any class=pa-inp data-labcode="${curItem.code}" value="${curItem.price}"></td>
+          </tr>`;
+        }).join('')}
+      </table></div>
+    </div>`;
+  }
+
+  return chips + `<div class=card>
+    <b>نسب خلط الخرسانة (استهلاك 1 م³ خرسانة)</b>
+    <p class=note>أي تعديل هنا يُحفظ تلقائياً وينعكس على جميع بنود الخرسانة.</p>
+    <div style="overflow-x:auto"><table>
+      <tr><th>النسبة</th><th class=r>الاستخدام</th><th>إسمنت (كيس)</th><th>رمل (م³)</th><th>كري (م³)</th></tr>
+      ${PA_CAT.mixes.map((m, i) => `<tr>
+        <td><b>${m.ratio}</b></td>
+        <td class=r><small>${esc(m.desc)}</small></td>
+        <td><input type=number step=any class=pa-inp data-mixv="${i}" data-mk="cement" value="${m.cement}"></td>
+        <td><input type=number step=any class=pa-inp data-mixv="${i}" data-mk="sand" value="${m.sand}"></td>
+        <td><input type=number step=any class=pa-inp data-mixv="${i}" data-mk="agg" value="${m.agg}"></td>
+      </tr>`).join('')}
+    </table></div>
+  </div>`;
+}
+
+nav = function() {
+  let T = [];
+  if (CUR.v === 'home') { $('#nav').innerHTML = ''; return; }
+  if (['proj', 'items', 'pa', 'sum'].includes(CUR.v))
+    T = [['home', 'الرئيسية'], ['proj', 'المشروع']].concat(CUR.started ? [['items', 'البنود'], ['pa', 'تحليل الأسعار'], ['sum', 'الخلاصة']] : []);
+  else
+    T = [['home', 'الرئيسية'], ['drafts', 'المسودات'], ['prices', 'أسعار المواد والعمالة'], ['set', 'الإعدادات']];
+  $('#nav').innerHTML = T.map(([k, t]) => `<button data-tab="${k}" class="${k === CUR.v ? 'on' : ''}">${t}</button>`).join('');
+};
+
+render = function() {
+  ensurePA();
+  nav();
+  const V = { home: homeHTML, drafts: draftsHTML, set: setHTML, proj: projHTML, items: itemsHTML, pa: paHTML, prices: pricesHTML, sum: sumHTML };
+  $('#main').innerHTML = V[CUR.v]();
+  updRes();
+  updPx();
+};
+
+const _origHomeHTML = homeHTML;
+homeHTML = function() {
+  const base = _origHomeHTML();
+  const priceBtn = `<button class=opt data-tab=prices><span class=ic style="background:#0e7490"><svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span><b>أسعار المواد والعمالة</b><small>قواعد الأسعار والخلطات</small></button>`;
+  return base.replace('<button class=opt data-tab=set>', priceBtn + '<button class=opt data-tab=set>');
+};
+
+exportXlsx = async function() {
+  ensurePA();
+  const P = D.proj, R = boq(), T = totals(), ps = D.paSet, wb = XLSX.utils.book_new();
+  const A = [['اسم المشروع', P.name], ['نوع المشروع', P.type], ['مهندس الحصر', P.engineer || ''], ['المالك', P.owner], ['تاريخ البدء', P.start], ['نسبة الهدر %', ps.wastage, 'نسبة الأرباح %', ps.profit, 'الإشراف والإدارية %', ps.overhead], ['الرقم', 'البند', 'الوحدة', 'الكمية', 'سعر الوحدة (' + ps.cur + ')', 'الإجمالي (' + ps.cur + ')']];
+  const F = [], tots = []; let ms0 = 0;
+  R.forEach(r => {
+    const i = A.length;
+    if (r.t === 'main') { A.push([r.n, r.l, '', '', '', '']); ms0 = i; }
+    else if (r.t === 'sub') A.push(['', r.l, '', '', '', '']);
+    else if (r.t === 'line') {
+      if (r.infoOnly) A.push([r.n, r.l + ' (للمعلومية)', r.u, +r.q.toFixed(3), 0, 0]);
+      else { A.push([r.n, r.l, r.u, +r.q.toFixed(3), +r.p.toFixed(2), 0]); F.push({ r: i, c: 5, f: `D${i + 1}*E${i + 1}`, v: r.amt }); }
+    } else if (r.t === 'tot') { A.push(['', r.l, '', '', '', 0]); F.push({ r: i, c: 5, f: `SUM(F${ms0 + 2}:F${i})`, v: r.amt }); tots.push('F' + (i + 1)); }
+    else { A.push(['', r.l, '', '', '', 0]); F.push({ r: i, c: 5, f: 'SUM(' + tots.join(',') + ')', v: r.amt }); }
+  });
+  const ws = XLSX.utils.aoa_to_sheet(A);
+  F.forEach(({ r, c, f, v }) => { ws[XLSX.utils.encode_cell({ r, c })] = { t: 'n', v, f }; });
+  ws['!cols'] = [{ wch: 8 }, { wch: 46 }, { wch: 8 }, { wch: 12 }, { wch: 15 }, { wch: 16 }];
+  ws['!views'] = [{ RTL: true }];
+  XLSX.utils.book_append_sheet(wb, ws, 'جدول الكميات');
+
+  const paRows = [['رقم البند', 'البند', 'وحدة البند', 'الكمية', 'كود المورد', 'المورد', 'وحدة المورد', 'المعدل', 'سعر المورد', 'إجمالي المورد', 'سعر الوحدة المباشر', 'سعر الوحدة النهائي']];
+  R.filter(r => r.t === 'line' && !r.infoOnly).forEach(ln => {
+    const c = paCalcLine(ln);
+    c.rows.forEach((rw, idx) => {
+      paRows.push([
+        idx === 0 ? ln.n : '', idx === 0 ? ln.l : '', idx === 0 ? ln.u : '', idx === 0 ? +ln.q.toFixed(2) : '',
+        rw.code, rw.info.label, rw.info.unit, +rw.norm.toFixed(3), +(rw.info.price * (+ps.rate || 1)).toFixed(2),
+        +(rw.totalCost * (+ps.rate || 1)).toFixed(2), idx === 0 ? +c.directUnit.toFixed(2) : '', idx === 0 ? +c.finalUnit.toFixed(2) : ''
+      ]);
+    });
+  });
+  const wpa = XLSX.utils.aoa_to_sheet(paRows); wpa['!views'] = [{ RTL: true }];
+  XLSX.utils.book_append_sheet(wb, wpa, 'تحليل الأسعار');
+
+  const wmat = XLSX.utils.aoa_to_sheet([['الكود', 'المادة', 'النوعية', 'الوحدة', 'السعر (ر.س)'], ...PA_CAT.materials.map(m => [m.code, m.group, m.spec, m.unit, m.price])]);
+  wmat['!views'] = [{ RTL: true }]; XLSX.utils.book_append_sheet(wb, wmat, 'أسعار المواد');
+
+  const wlab = XLSX.utils.aoa_to_sheet([['الكود', 'البند', 'النوعية', 'الوحدة', 'السعر (ر.س)'], ...PA_CAT.labor.map(l => [l.code, l.group, l.spec, l.unit, l.price])]);
+  wlab['!views'] = [{ RTL: true }]; XLSX.utils.book_append_sheet(wb, wlab, 'العمالة والمعدات');
+
+  const wm = XLSX.utils.aoa_to_sheet([['المادة (للمعلومية)', 'الوحدة', 'الكمية'], ...matsRows(T)]);
+  wm['!views'] = [{ RTL: true }]; XLSX.utils.book_append_sheet(wb, wm, 'إجمالي المواد');
+
+  wb.Workbook = { CalcPr: { fullCalcOnLoad: true } };
+  await saveBlob(new Blob([XLSX.write(wb, { bookType: 'xlsx', type: 'array' })], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), 'الحصر-وتحليل-الاسعار.xlsx');
+};
+
+// Event Listeners
+document.body.addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.psub) { PRICES_SUB = t.dataset.psub; render(); return; }
+  if (t.dataset.paApplyPset) { D.pa = {}; save(); render(); toast('تم تطبيق إعدادات المشروع على جميع البنود'); return; }
+  if (t.dataset.paSavePreset) {
+    const name = prompt('أدخل اسماً لحفظ قالب الإعدادات (مثال: أسعار مأرب 2026):', D.paSet.presetName || '');
+    if (!name || !name.trim()) return;
+    const cleanName = name.trim();
+    const rec = Object.assign(clone(D.paSet), { name: cleanName, presetName: cleanName });
+    const idx = PA_PRESETS.findIndex(p => p.name === cleanName);
+    if (idx >= 0) PA_PRESETS[idx] = rec; else PA_PRESETS.push(rec);
+    D.paSet.presetName = cleanName;
+    savePAPresets(); save(); render(); toast('تم حفظ القالب: ' + cleanName); return;
+  }
+  if (t.dataset.paDelPreset) {
+    const sel = document.querySelector('[data-pa-load-preset]');
+    const idx = sel && sel.value !== '' ? +sel.value : -1;
+    if (idx < 0 || !PA_PRESETS[idx]) { toast('اختر القالب المراد حذفه أولاً'); return; }
+    if (!confirm('حذف القالب «' + PA_PRESETS[idx].name + '»؟')) return;
+    PA_PRESETS.splice(idx, 1); savePAPresets(); render(); toast('تم حذف القالب'); return;
+  }
+  if (t.dataset.pardel) { const k = t.dataset.pardel, ri = +t.dataset.ri; if (D.pa[k]) { D.pa[k].resources.splice(ri, 1); save(); render(); } return; }
+  if (t.dataset.paradd) { const k = t.dataset.paradd; if (D.pa[k]) { D.pa[k].resources.push({ code: PA_CAT.materials[0].code, norm: 1, mixRole: null }); save(); render(); } return; }
+  if (t.dataset.addmat) {
+    const group = prompt('اسم المادة (مثال: الإسمنت / الرمل / البلك / مادة جديدة):'); if (!group) return;
+    const spec = prompt('النوعية / المواصفة:', 'قياسي') || 'قياسي';
+    const unit = prompt('الوحدة (كيس/م³/طن/م²/حبة):', 'م³') || 'م³';
+    const price = num(prompt('السعر (ريال سعودي):', '0'));
+    const code = 'M-' + String(PA_CAT.materials.length + 1).padStart(3, '0');
+    PA_CAT.materials.push({ code, group: group.trim(), spec: spec.trim(), unit: unit.trim(), price });
+    PA_MAT_SEL[group.trim()] = code;
+    savePACat(); render(); toast('تمت إضافة المادة وحفظها'); return;
+  }
+  if (t.dataset.addlab) {
+    const group = prompt('اسم البند / القسم (مثال: القواعد والأساسات / المباني):'); if (!group) return;
+    const spec = prompt('نوع العمالة أو المعدة:'); if (!spec) return;
+    const unit = prompt('الوحدة (ساعة/يومية/م²/م³):', 'م²') || 'م²';
+    const price = num(prompt('السعر (ريال سعودي):', '0'));
+    const code = 'L-' + String(PA_CAT.labor.length + 1).padStart(3, '0');
+    PA_CAT.labor.push({ code, group: group.trim(), spec: spec.trim(), unit: unit.trim(), price });
+    PA_LAB_SEL[group.trim()] = code;
+    savePACat(); render(); toast('تمت إضافة العمالة وحفظها'); return;
+  }
+});
+
+document.body.addEventListener('change', e => {
+  const t = e.target;
+  if (t.dataset.paLoadPreset !== undefined) {
+    const idx = t.value !== '' ? +t.value : -1;
+    if (idx >= 0 && PA_PRESETS[idx]) {
+      D.paSet = clone(PA_PRESETS[idx]);
+      D.pa = {};
+      save(); render(); toast('تم تطبيق القالب: ' + PA_PRESETS[idx].name);
+    }
+    return;
+  }
+  if (t.dataset.pset) {
+    const k = t.dataset.pset;
+    D.paSet[k] = t.type === 'checkbox' ? t.checked : (['cement','sand','agg','steel','block','plasterLab','mixPlain','mixFloor','mixRein','mixCol','cur'].includes(k) ? t.value : num(t.value));
+    save(); render(); return;
+  }
+  if (t.dataset.mgSel) { PA_MAT_SEL[t.dataset.mgSel] = t.value; render(); return; }
+  if (t.dataset.lgSel) { PA_LAB_SEL[t.dataset.lgSel] = t.value; render(); return; }
+  if (t.dataset.matcode) {
+    const it = PA_CAT.materials.find(x => x.code === t.dataset.matcode);
+    if (it) { it.price = num(t.value); savePACat(); toast('تم حفظ سعر ' + it.spec); }
+    return;
+  }
+  if (t.dataset.labcode) {
+    const it = PA_CAT.labor.find(x => x.code === t.dataset.labcode);
+    if (it) { it.price = num(t.value); savePACat(); toast('تم حفظ سعر ' + it.spec); }
+    return;
+  }
+  if (t.dataset.mixv !== undefined) {
+    PA_CAT.mixes[+t.dataset.mixv][t.dataset.mk] = num(t.value);
+    savePACat(); toast('تم حفظ تعديل الخلطة'); return;
+  }
+  if (t.dataset.pamix) { const k = t.dataset.pamix; if (D.pa[k]) { D.pa[k].mix = t.value; save(); render(); } return; }
+  if (t.dataset.parcode) { const k = t.dataset.parcode, ri = +t.dataset.ri; if (D.pa[k] && D.pa[k].resources[ri]) { D.pa[k].resources[ri].code = t.value; save(); render(); } return; }
+  if (t.dataset.parnorm) { const k = t.dataset.parnorm, ri = +t.dataset.ri; if (D.pa[k] && D.pa[k].resources[ri]) { D.pa[k].resources[ri].norm = num(t.value); D.pa[k].resources[ri].autoSteel = false; save(); render(); } return; }
+});
+/*END_PRICE_ANALYSIS_V2_INTEGRATION*/
+
+
+/*V3_UPGRADES_START*/
+// 1. Auto-naming symbols & room presets
+const AUTO_SYM = {
+  foot:'F', sfoot:'CF', sh:'TB', raft:'RF', col:'C', neck:'N',
+  beam:'GB', sbeam:'B', slab:'S', rib:'HS', rib2:'HS2-',
+  exc:'EX', bf:'BF', kur:'KW', jaam:'JM', wall:'W', stwall:'SW',
+  ext:'EXT', rasif:'RS', rm:'غرفة ', op:'OP'
+};
+const RM_PRESETS = ['غرفة','صالة','مطبخ','حمام','مجلس','ممر','مكتب','مخزن','تسمية أخرى'];
+
+function nextAutoName(k, customPrefix) {
+  const list = D[k] || [];
+  const pfx = customPrefix || AUTO_SYM[k] || 'B';
+  let maxN = 0;
+  list.forEach(x => {
+    const nm = String(x.name || '').trim();
+    if (nm.startsWith(pfx)) {
+      const rest = nm.slice(pfx.length).trim();
+      const m = rest.match(/^(\d+)/);
+      if (m) maxN = Math.max(maxN, parseInt(m[1], 10));
+    }
+  });
+  return pfx + (maxN + 1);
+}
+
+// Single-form state: DRAFT_FORM[k] holds the active form object; EDIT_IDX[k] = -1 (new) or index (editing)
+let DRAFT_FORM = {};
+let EDIT_IDX = {};
+
+function getDraft(k) {
+  if (!DRAFT_FORM[k]) {
+    const o = newItem(k);
+    o.name = nextAutoName(k);
+    DRAFT_FORM[k] = o;
+    EDIT_IDX[k] = -1;
+  }
+  return DRAFT_FORM[k];
+}
+
+function resetDraft(k) {
+  const o = newItem(k);
+  o.name = nextAutoName(k);
+  DRAFT_FORM[k] = o;
+  EDIT_IDX[k] = -1;
+}
+
+// 2. Upgrade الكرسي الحجري (kur) definition & engineering calculation
+MOD.kur = {
+  t: 'الكرسي الحجري',
+  f: [
+    ['B', 'الطول م'],
+    ['C', 'سمك الجدار الكلي م'],
+    ['D', 'الارتفاع م'],
+    ['n', 'العدد'],
+    ['st', 'سماكة الحجر المربوع م'],
+    ['rp', 'نسبة الجعم في البطانة %']
+  ],
+  z: { n: 1, st: 0.08, rp: 70, faces: '1' },
+  sel: [['faces', 'عدد أوجه الظهارة', () => ['1', '2']]]
+};
+NOTE.kur = 'الظهارة: حجر مربوع يُحسب بالحبة (25×25 سم = 16 حبة/م²). البطانة: يُخصم سماكة الحجر (8 سم/وجه) من سمك الجدار، وتُقسم إلى 70% جعم و30% خرسانة عادية.';
+
+// Update bf (الردم الإضافي) fields cleanly
+MOD.bf = {
+  t: 'الردم الإضافي',
+  f: [['B', 'الطول م'], ['C', 'العرض م'], ['D', 'الارتفاع م'], ['n', 'العدد'], ['dd', 'خصم م³']],
+  z: { n: 1 }
+};
+
+// Add stone piece material for kur facing (25x25) if not present
+if (!PA_CAT.materials.find(m => m.code === 'M-050')) {
+  PA_CAT.materials.push({ code: 'M-050', group: 'الحجر', spec: 'حجر مربوع ظهارة (25×25 سم - بالحبة)', unit: 'حبة', price: 8.5 });
+  savePACat();
+}
+
+// Wrap calc() for upgraded 'kur'
+const _v2Calc = calc;
+calc = function(k, x) {
+  if (k === 'kur') {
+    const B = +x.B || 0, C = +x.C || 0, Dd = +x.D || 0, n = +x.n || 1;
+    const st = (x.st !== undefined && x.st !== '') ? +x.st : 0.08;
+    const rp = (x.rp !== undefined && x.rp !== '') ? +x.rp : 70;
+    const faces = +(x.faces || 1);
+    const faceArea = B * Dd * n * faces;
+    const stones = Math.ceil(faceArea / 0.0625); // 25x25 cm = 0.0625 m2
+    const coreT = Math.max(0, C - st * faces);
+    const coreVol = B * coreT * Dd * n;
+    const jaamVol = coreVol * (rp / 100);
+    const concVol = coreVol * ((100 - rp) / 100);
+    return { plain: 0, rein: 0, steel: 0, kur: coreVol, kurStones: stones, kurArea: faceArea, kurJaam: jaamVol, kurConc: concVol };
+  }
+  return _v2Calc(k, x);
+};
+
+// Update RL labels for kur results
+Object.assign(RL, { kurStones: 'حجر مربوع (حبة)', kurArea: 'مساحة ظهارة م²', kurJaam: 'جعم بطانة م³', kurConc: 'خرسانة بطانة م³' });
+
+// Wrap totals() to include additional backfill (D.bf) and kur concrete/jaam
+const _v2Totals = totals;
+totals = function() {
+  const T = _v2Totals();
+  const addBf = sumK(['bf'], 'back');
+  T.backAuto = Math.max(0, T.exc - dedSum());
+  T.backAdd = addBf;
+  T.back = T.backAuto + T.backAdd;
+  T.kurStones = sumK(['kur'], 'kurStones');
+  T.kurJaam = sumK(['kur'], 'kurJaam');
+  T.kurConc = sumK(['kur'], 'kurConc');
+  // Include kur concrete in plain concrete materials summary
+  if (T.kurConc > 0) {
+    const mk = mix(T.kurConc, S.dry, S.mixP);
+    T.mp.c += mk.c; T.mp.s += mk.s; T.mp.g += mk.g;
+  }
+  return T;
+};
+
+// Wrap lines() for upgraded 'kur' and 'bf'
+const _v2Lines = lines;
+lines = function(k, T) {
+  if (k === 'kur') {
+    const o = [];
+    const L = (d, u, q) => { if (q > 0) o.push({ l: d, u, q, key: MOD.kur.t + ' | ' + d }); };
+    L('ظهارة كرسي حجر مربوع (25×25)', 'حبة', T.kurStones);
+    L('بطانة كرسي حجر (جعم)', 'م³', T.kurJaam);
+    L('خرسانة عادية لبطانة الكرسي', 'م³', T.kurConc);
+    return o;
+  }
+  if (k === 'bf') {
+    const o = [];
+    if (T.backAuto > 0) o.push({ l: 'ردم (من ناتج الحفر)', u: 'م³', q: T.backAuto, key: 'الردم | ردم تلقائي' });
+    if (T.backAdd > 0) o.push({ l: 'ردم إضافي (طول×عرض×ارتفاع)', u: 'م³', q: T.backAdd, key: 'الردم | ردم إضافي' });
+    return o;
+  }
+  return _v2Lines(k, T);
+};
+
+// Upgrade bfHTML() to include Additional Backfill single-form + list
+bfHTML = function() {
+  const v = DEDV(), T = totals();
+  const rows = ['fp', 'fr', 'nk', 'bm', 'rp', 'rr'].map(k =>
+    `<tr><td class=r>${DEDL[k]}</td><td>${f3(v[k])} م³</td><td><button class=${D.ded[k] ? 'ghost' : 'btn'} data-ded="${k}">${D.ded[k] ? 'إلغاء الخصم' : 'تأكيد الخصم'}</button></td></tr>`
+  ).join('');
+  return `<div class=card>
+    <b>الردم التلقائي (من الحفر)</b>
+    <p class=note>الردم التلقائي = الحفر الكلي − الخصومات المؤكدة.</p>
+    <p>الحفر الكلي: <b id=bfExc>${f3(T.exc)}</b> م³ | الردم التلقائي: <b>${f3(T.backAuto)}</b> م³</p>
+    <table><tr><th>الخصم</th><th>القيمة</th><th></th></tr>${rows}</table>
+    <p class=res id=bfRes>إجمالي الردم (تلقائي + إضافي) = ${f3(T.back)} م³</p>
+  </div>
+  <div class=card><b>بنود الردم الإضافي (طول × عرض × ارتفاع)</b>` + listHTML('bf') + `</div>`;
+};
+
+// 3. Upgrade listHTML(k, cbs) to Single Input Form + Auto-Reset + Dropdown/List Below
+listHTML = function(k, cbs) {
+  const x = getDraft(k);
+  const eIdx = EDIT_IDX[k] ?? -1;
+  const isEdit = eIdx >= 0;
+  const list = D[k] || [];
+
+  // Room quick-name selector if k === 'rm'
+  let nameRow = '';
+  if (k === 'rm') {
+    nameRow = `<div class=grid style="grid-template-columns:1fr 1fr;margin-bottom:8px">
+      <label>نوع التسمية السريعة
+        <select data-rm-preset=1>
+          ${RM_PRESETS.map(p => `<option value="${p}" ${String(x.name||'').startsWith(p)?'selected':''}>${p}</option>`).join('')}
+        </select>
+      </label>
+      <label>اسم الغرفة / الفراغ (قابل للتعديل)
+        <input data-dname="${k}" value="${esc(x.name)}" placeholder="مثال: غرفة 1">
+      </label>
+    </div>`;
+  } else {
+    nameRow = `<div class=row>
+      <label style="flex:1">رمز / اسم البند (ترقيم تلقائي — قابل للتعديل)
+        <input data-dname="${k}" value="${esc(x.name)}" placeholder="${AUTO_SYM[k]||'B'}1">
+      </label>
+    </div>`;
+  }
+
+  const flds = `<div class=grid>${MOD[k].f.map(([q, lab]) =>
+    `<label>${lab}<input type=number inputmode=decimal step=any data-dm="${k}" data-df="${q}" value="${x[q] ?? 0}"></label>`
+  ).join('')}</div>`;
+
+  const sels = (MOD[k].sel || []).map(([q, l, op]) =>
+    `<label>${l}<select data-dm="${k}" data-dk="${q}">${op(x).map(v => `<option value="${v}" ${String(v) === String(x[q]) ? 'selected' : ''}>${v}</option>`).join('')}</select></label>`
+  ).join('');
+
+  const cbsHTML = cbs ? `<div class=tools>${cbs.map(([f, l]) =>
+    `<label class=chk><input type=checkbox data-dcb="${f}" data-dm="${k}" ${x[f] ? 'checked' : ''}> ${l}</label>`
+  ).join('')}</div>` : '';
+
+  const previewTxt = resTxt(k, x);
+
+  let h = `<div class=card style="border-top:4px solid var(--navy)">
+    <div class=tools style="justify-content:space-between;margin-top:0">
+      <b>${isEdit ? 'تعديل البند: ' + esc(x.name) : 'إدخال بند جديد (' + esc(x.name) + ')'}</b>
+      ${isEdit ? `<button class=ghost data-dcancel="${k}" style="padding:5px 10px;font-size:12px">إلغاء التعديل</button>` : ''}
+    </div>
+    ${nameRow}
+    ${flds}
+    ${sels ? `<div class=grid>${sels}</div>` : ''}
+    ${cbsHTML}
+    <div class=res id="draft-res-${k}">${previewTxt || 'أدخل الأبعاد لحساب النتيجة...'}</div>
+    <div class=tools style="margin-bottom:0">
+      <button class=btn data-dsave="${k}">${isEdit ? 'حفظ التعديل وتصفير الإدخال' : '+ بند جديد (ترحيل وتصفير)'}</button>
+      <button class=ghost data-dclear="${k}">تصفير الحقول</button>
+    </div>
+  </div>`;
+
+  // Dropdown + Compact Table below for selecting any saved item to edit/delete
+  if (list.length) {
+    h += `<div class=card>
+      <b>البنود المُرحَّلة (${list.length}) — اختر للتعديل</b>
+      <div class=row style="margin-top:6px">
+        <select data-dsel="${k}" style="flex:1">
+          <option value="">— اختر بنداً لاستدعائه وتعديله —</option>
+          ${list.map((it, i) => `<option value="${i}" ${i === eIdx ? 'selected' : ''}>${esc(it.name || (AUTO_SYM[k] + (i + 1)))} — ${resTxt(k, it)}</option>`).join('')}
+        </select>
+      </div>
+      <div style="overflow-x:auto;margin-top:8px"><table>
+        <tr><th class=r>الرمز / الاسم</th><th class=r>النتيجة</th><th>إجراء</th></tr>
+        ${list.map((it, i) => `<tr style="${i === eIdx ? 'background:var(--mrow)' : ''}">
+          <td class=r><b>${esc(it.name || (AUTO_SYM[k] + (i + 1)))}</b></td>
+          <td class=r><small>${resTxt(k, it)}</small></td>
+          <td style="white-space:nowrap">
+            <button class=ghost style="padding:4px 8px;font-size:12px" data-dedit="${k}" data-i="${i}">تعديل</button>
+            <button class=del style="padding:4px 8px;font-size:12px" data-act=del data-m="${k}" data-i="${i}">حذف</button>
+          </td>
+        </tr>`).join('')}
+      </table></div>
+    </div>`;
+  } else {
+    h += `<p class=note>لم يتم ترحيل أي بنود بعد. أدخل الأبعاد بالأعلى ثم اضغط «+ بند جديد (ترحيل وتصفير)».</p>`;
+  }
+  return h;
+};
+
+// 4. Context-Filtered Resources in Price Analysis (no cement inside excavation!)
+function allowedGroupsForLine(line) {
+  const l = (line && line.l) ? line.l : '';
+  if (l.includes('حفر') || l.includes('ردم')) {
+    return { mat: ['تربة الردم', 'الماء'], lab: ['الحفر والردم والمعدات'] };
+  }
+  if (l.includes('خرسانة')) {
+    return { mat: ['الإسمنت', 'الرمل', 'الكري', 'حديد التسليح', 'أسلاك تربيط', 'الماء', 'خرسانة جاهزة'], lab: ['الخرسانة العادية', 'القواعد والأساسات', 'الأعمدة والرقاب', 'السقوف والجسور', 'الحفر والردم والمعدات'] };
+  }
+  if (l.includes('كرسي') || l.includes('جعم') || l.includes('حجر') || l.includes('بلك') || l.includes('هوردي')) {
+    return { mat: ['الحجر', 'البلك', 'الإسمنت', 'الرمل', 'الماء'], lab: ['المباني (بلك وحجر)', 'الحفر والردم والمعدات'] };
+  }
+  if (l.includes('تلابيس')) {
+    return { mat: ['الإسمنت', 'الرمل', 'الماء', 'مواد اللياسة'], lab: ['اللياسة والدهان'] };
+  }
+  if (l.includes('دهان') || l.includes('رشة')) {
+    return { mat: ['الدهانات'], lab: ['اللياسة والدهان'] };
+  }
+  if (l.includes('بلاط') || l.includes('نعلة') || l.includes('رصف')) {
+    return { mat: ['البلاط والأرضيات', 'الإسمنت', 'الرمل', 'الكري', 'الماء'], lab: ['البلاط والعزل'] };
+  }
+  if (l.includes('عزل')) {
+    return { mat: ['العزل', 'الإسمنت', 'الرمل', 'الكري'], lab: ['البلاط والعزل'] };
+  }
+  if (l.includes('نوافذ') || l.includes('أبواب')) {
+    return { mat: ['النوافذ والأبواب'], lab: ['المباني (بلك وحجر)', 'الحفر والردم والمعدات'] };
+  }
+  return null; // fallback: all
+}
+
+// Track which lines requested "show all resources"
+let PA_SHOW_ALL = {};
+
+// Override paResOpts to filter by line context unless user explicitly expands all
+const _v2PaResOpts = paResOpts;
+paResOpts = function(selCode, line) {
+  const allow = (line && !PA_SHOW_ALL[line.key]) ? allowedGroupsForLine(line) : null;
+  const mats = allow ? PA_CAT.materials.filter(m => allow.mat.includes(m.group) || m.code === selCode) : PA_CAT.materials;
+  const labs = allow ? PA_CAT.labor.filter(l => allow.lab.includes(l.group) || l.code === selCode) : PA_CAT.labor;
+  let html = '';
+  if (mats.length) {
+    html += '<optgroup label="المواد المخصصة للبند">' +
+      mats.map(m => `<option value="${m.code}" ${m.code===selCode?'selected':''}>${esc(m.group)} — ${esc(m.spec)}</option>`).join('') +
+      '</optgroup>';
+  }
+  if (labs.length) {
+    html += '<optgroup label="العمالة والمعدات المخصصة للبند">' +
+      labs.map(l => `<option value="${l.code}" ${l.code===selCode?'selected':''}>${esc(l.group)} — ${esc(l.spec)}</option>`).join('') +
+      '</optgroup>';
+  }
+  if (allow) {
+    html += '<option value="__SHOW_ALL__">➕ عرض جميع المواد والعمالة...</option>';
+  }
+  html += '<option value="__NEW_RES__">✨ استحداث مادة / عمالة جديدة...</option>';
+  return html;
+};
+
+// Update paDefaultRecipe for kur facing (by piece) & kur jaam
+const _v2DefaultRecipe = paDefaultRecipe;
+paDefaultRecipe = function(line) {
+  const l = line.l || '';
+  if (l.includes('ظهارة كرسي حجر مربوع')) {
+    const ps = D.paSet;
+    return { mix: null, resources: [
+      { code: 'M-050', norm: 1.0, mixRole: null },
+      { code: ps.cement, norm: 0.04, mixRole: null },
+      { code: ps.sand, norm: 0.006, mixRole: null },
+      { code: 'L-019', norm: 0.0625, mixRole: null }
+    ]};
+  }
+  return _v2DefaultRecipe(line);
+};
+
+// Patch paHTML to pass `ln` into paResOpts(r.code, ln)
+const _v2PaHTML = paHTML;
+paHTML = function() {
+  ensurePA();
+  const ps = D.paSet, cur = esc(ps.cur || 'ر.س');
+  const pricedLines = boq().filter(r => r.t === 'line' && !r.infoOnly);
+  let grandDirect = 0, grandFinal = 0;
+  const calcs = pricedLines.map(ln => {
+    const c = paCalcLine(ln);
+    grandDirect += c.directTotal;
+    grandFinal += c.finalTotal;
+    return { ln, c };
+  });
+  const wVal = grandDirect * (+ps.wastage || 0) / 100;
+  const oVal = grandDirect * (+ps.overhead || 0) / 100;
+  const pVal = grandDirect * (+ps.profit || 0) / 100;
+  const totPct = (+ps.wastage || 0) + (+ps.overhead || 0) + (+ps.profit || 0);
+
+  let h = `<div class=card>
+    <div class=tools style="justify-content:space-between;margin-top:0">
+      <b>إعدادات المشروع وقوالب التسعير</b>
+      <button class=btn data-pa-save-preset=1>حفظ الإعدادات كقالب باسم</button>
+    </div>
+    <div class=tools>
+      <label style="flex:1;min-width:190px">استدعاء قالب محفوظ لمشروع آخر:
+        <select data-pa-load-preset=1>
+          <option value="">— اختر قالباً محفوظاً (${PA_PRESETS.length}) —</option>
+          ${PA_PRESETS.map((pr, i) => `<option value="${i}" ${pr.name===ps.presetName?'selected':''}>${esc(pr.name)}</option>`).join('')}
+        </select>
+      </label>
+      ${PA_PRESETS.length ? `<button class=del data-pa-del-preset=1>حذف القالب المختار</button>` : ''}
+    </div>
+    <div class=grid>
+      <label>نوع الإسمنت<select data-pset="cement">${grpOpts(PA_CAT.materials, 'الإسمنت', ps.cement)}</select></label>
+      <label>نوع الرمل<select data-pset="sand">${grpOpts(PA_CAT.materials, 'الرمل', ps.sand)}</select></label>
+      <label>نوع الكري<select data-pset="agg">${grpOpts(PA_CAT.materials, 'الكري', ps.agg)}</select></label>
+      <label>نوع الحديد<select data-pset="steel">${grpOpts(PA_CAT.materials, 'حديد التسليح', ps.steel)}</select></label>
+      <label>نوع البلك<select data-pset="block">${grpOpts(PA_CAT.materials, 'البلك', ps.block)}</select></label>
+      <label>مصنعية اللياسة<select data-pset="plasterLab">${grpOpts(PA_CAT.labor, 'اللياسة والدهان', ps.plasterLab)}</select></label>
+    </div>
+    <div class=grid>
+      <label>خلطة النظافة<select data-pset="mixPlain">${mixOpts(ps.mixPlain)}</select></label>
+      <label>خلطة الأرضيات<select data-pset="mixFloor">${mixOpts(ps.mixFloor)}</select></label>
+      <label>خلطة القواعد والسقوف<select data-pset="mixRein">${mixOpts(ps.mixRein)}</select></label>
+      <label>خلطة الأعمدة والرقاب<select data-pset="mixCol">${mixOpts(ps.mixCol)}</select></label>
+      <label>سعر الصرف (مقابل 1 ر.س)<input type=number step=any data-pset="rate" value="${ps.rate}"></label>
+      <label>رمز العملة<input data-pset="cur" value="${cur}"></label>
+    </div>
+    <div class=grid>
+      <label>نسبة الهدر %<input type=number step=any data-pset="wastage" value="${ps.wastage}"></label>
+      <label>نسبة الأرباح %<input type=number step=any data-pset="profit" value="${ps.profit}"></label>
+      <label>الإشراف والإدارية %<input type=number step=any data-pset="overhead" value="${ps.overhead}"></label>
+    </div>
+    <div class=tools style="margin-bottom:0">
+      <button class=btn data-pa-apply-pset=1>تطبيق إعدادات المشروع على البنود</button>
+      <button class=ghost data-tab="prices">تعديل أسعار المواد والعمالة</button>
+      <label class=chk style="margin:0;padding:6px 10px"><input type=checkbox data-pset="autoPrice" ${ps.autoPrice?'checked':''}> ربط الأسعار بالخلاصة</label>
+    </div>
+  </div>`;
+
+  h += `<div class=pa-kpis>
+    <div class=pa-kpi><small>التكلفة المباشرة</small><b>${f0(grandDirect)} ${cur}</b></div>
+    <div class=pa-kpi><small>الهدر (${ps.wastage}%)</small><b>${f0(wVal)} ${cur}</b></div>
+    <div class=pa-kpi><small>الإشراف والإدارية (${ps.overhead}%)</small><b>${f0(oVal)} ${cur}</b></div>
+    <div class=pa-kpi><small>الأرباح (${ps.profit}%)</small><b>${f0(pVal)} ${cur}</b></div>
+    <div class="pa-kpi hi"><small>الإجمالي النهائي (${f2(totPct)}%+)</small><b>${f0(grandFinal)} ${cur}</b></div>
+  </div>`;
+
+  if (!calcs.length) {
+    return h + '<p class=note>لا توجد بنود محصورة بعد. أضف كميات من تبويب «البنود» لتظهر هنا وتُحلَّل أسعارها تلقائياً.</p>';
+  }
+
+  calcs.forEach(({ ln, c }) => {
+    const keyEnc = esc(ln.key);
+    const mixSel = c.rec.mix ? `<label style="display:inline-flex;flex-direction:row;align-items:center;gap:6px">الخلطة:<select class=pa-sel data-pamix="${keyEnc}">${mixOpts(c.rec.mix)}</select></label>` : '';
+    h += `<div class=card>
+      <div class=tools style="justify-content:space-between;margin-top:0">
+        <div><span class=tag>${ln.n}</span> <b>${esc(ln.l)}</b> <small style="color:var(--mut)">(${f2(ln.q)} ${ln.u})</small></div>
+        <div class=pa-pill>مباشر: ${f2(c.directUnit)} | نهائي: ${f2(c.finalUnit)} ${cur}/${ln.u}</div>
+      </div>
+      ${mixSel ? `<div class=tools>${mixSel}</div>` : ''}
+      <div style="overflow-x:auto"><table>
+        <tr><th class=r>المادة / العمالة / المعدة</th><th>الوحدة</th><th>المعدل</th><th>السعر</th><th>الإجمالي</th><th></th></tr>
+        ${c.rows.map((r, ri) => `<tr>
+          <td class=r><select class=pa-sel data-parcode="${keyEnc}" data-ri="${ri}">${paResOpts(r.code, ln)}</select>${r.mixRole?' <span class=tag>خلطة</span>':(r.autoSteel?' <span class=tag>من الحصر</span>':'')}</td>
+          <td>${r.info.unit}</td>
+          <td>${r.mixRole ? `<b>${f3(r.norm)}</b>` : `<input type=number step=any class=pa-inp data-parnorm="${keyEnc}" data-ri="${ri}" value="${r.norm}">`}</td>
+          <td>${f2(r.info.price * (+ps.rate||1))}</td>
+          <td><b>${f0(r.totalCost * (+ps.rate||1))}</b></td>
+          <td><button class=del style="padding:4px 8px" data-pardel="${keyEnc}" data-ri="${ri}">×</button></td>
+        </tr>`).join('')}
+      </table></div>
+      <div class=tools style="margin-bottom:0">
+        <button class=ghost style="padding:5px 10px;font-size:12px" data-paradd-ctx="${keyEnc}">+ إضافة مورد للبند</button>
+        <button class=ghost style="padding:5px 10px;font-size:12px" data-parnew-ctx="${keyEnc}">✨ استحداث مورد جديد</button>
+        <small style="color:var(--mut)">إجمالي البند النهائي: <b>${f0(c.finalTotal)} ${cur}</b></small>
+      </div>
+    </div>`;
+  });
+  return h;
+};
+
+// Event Handlers for V3 Single-Form & Context-Filtered Resources
+document.body.addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.dsave) {
+    const k = t.dataset.dsave;
+    const item = clone(getDraft(k));
+    if (!item.name || !item.name.trim()) item.name = nextAutoName(k);
+    const idx = EDIT_IDX[k] ?? -1;
+    if (idx >= 0 && D[k][idx]) {
+      D[k][idx] = item;
+      toast('تم حفظ تعديل ' + item.name);
+    } else {
+      D[k].push(item);
+      toast('تم ترحيل ' + item.name + ' وتصفير الإدخال');
+    }
+    resetDraft(k);
+    save(); render(); return;
+  }
+  if (t.dataset.dclear || t.dataset.dcancel) {
+    const k = t.dataset.dclear || t.dataset.dcancel;
+    resetDraft(k); render(); return;
+  }
+  if (t.dataset.dedit) {
+    const k = t.dataset.dedit, i = +t.dataset.i;
+    if (D[k] && D[k][i]) {
+      DRAFT_FORM[k] = clone(D[k][i]);
+      EDIT_IDX[k] = i;
+      render();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    return;
+  }
+  if (t.dataset.paraddCtx) {
+    const k = t.dataset.paraddCtx;
+    const ln = boq().find(r => r.key === k);
+    const allow = ln ? allowedGroupsForLine(ln) : null;
+    let defCode = PA_CAT.materials[0].code;
+    if (allow) {
+      const m = PA_CAT.materials.find(x => allow.mat.includes(x.group));
+      const l = PA_CAT.labor.find(x => allow.lab.includes(x.group));
+      defCode = (l && !m) ? l.code : (m ? m.code : defCode);
+    }
+    if (D.pa[k]) { D.pa[k].resources.push({ code: defCode, norm: 1, mixRole: null }); save(); render(); }
+    return;
+  }
+  if (t.dataset.parnewCtx) {
+    const k = t.dataset.parnewCtx;
+    const isMat = confirm('اضغط «موافق» لاستحداث مادة جديدة، أو «إلغاء» لاستحداث عمالة/معدة جديدة:');
+    const spec = prompt(isMat ? 'اسم ونوعية المادة الجديدة:' : 'وصف العمالة أو المعدة الجديدة:');
+    if (!spec) return;
+    const unit = prompt('الوحدة (م³ / م² / حبة / ساعة / يومية):', isMat ? 'م³' : 'م²') || 'م²';
+    const price = num(prompt('سعر الوحدة (ريال سعودي):', '0'));
+    let code = '';
+    if (isMat) {
+      code = 'M-' + String(PA_CAT.materials.length + 1).padStart(3, '0');
+      PA_CAT.materials.push({ code, group: 'مواد إضافية', spec: spec.trim(), unit: unit.trim(), price });
+    } else {
+      code = 'L-' + String(PA_CAT.labor.length + 1).padStart(3, '0');
+      PA_CAT.labor.push({ code, group: 'عمالة إضافية', spec: spec.trim(), unit: unit.trim(), price });
+    }
+    savePACat();
+    if (D.pa[k]) { D.pa[k].resources.push({ code, norm: 1, mixRole: null }); save(); render(); toast('تم استحداث وإضافة ' + spec); }
+    return;
+  }
+});
+
+document.body.addEventListener('input', e => {
+  const t = e.target;
+  if (t.dataset.dname) {
+    const k = t.dataset.dname;
+    getDraft(k).name = t.value;
+    return;
+  }
+  if (t.dataset.dm && t.dataset.df) {
+    const k = t.dataset.dm, f = t.dataset.df;
+    const d = getDraft(k);
+    d[f] = num(t.value);
+    const el = $('#draft-res-' + k);
+    if (el) el.textContent = resTxt(k, d) || 'أدخل الأبعاد لحساب النتيجة...';
+    return;
+  }
+});
+
+document.body.addEventListener('change', e => {
+  const t = e.target;
+  if (t.dataset.rmPreset) {
+    const v = t.value;
+    const d = getDraft('rm');
+    if (v === 'تسمية أخرى') {
+      const custom = prompt('أدخل التسمية المخصصة:', '');
+      if (custom) d.name = custom.trim();
+    } else {
+      d.name = nextAutoName('rm', v + ' ');
+    }
+    render(); return;
+  }
+  if (t.dataset.dm && t.dataset.dk) {
+    const k = t.dataset.dm, q = t.dataset.dk;
+    getDraft(k)[q] = t.value;
+    render(); return;
+  }
+  if (t.dataset.dcb && t.dataset.dm) {
+    getDraft(t.dataset.dm)[t.dataset.dcb] = t.checked;
+    return;
+  }
+  if (t.dataset.dsel) {
+    const k = t.dataset.dsel;
+    if (t.value !== '') {
+      const i = +t.value;
+      if (D[k] && D[k][i]) {
+        DRAFT_FORM[k] = clone(D[k][i]);
+        EDIT_IDX[k] = i;
+        render();
+      }
+    }
+    return;
+  }
+  if (t.dataset.parcode) {
+    const k = t.dataset.parcode, ri = +t.dataset.ri;
+    if (t.value === '__SHOW_ALL__') {
+      PA_SHOW_ALL[k] = true;
+      render(); return;
+    }
+    if (t.value === '__NEW_RES__') {
+      const btn = document.querySelector(`[data-parnew-ctx="${k}"]`);
+      if (btn) btn.click();
+      return;
+    }
+  }
+});
+/*V3_UPGRADES_END*/
+
+/*V4_ACCURACY_UPGRADE_START*/
+// 1. Upgrade Solid Slab (slab) fields & accurate steel calculation (fixing missing span multiplication + separate diameters + top support bars 0.25L)
+MOD.slab = {
+  t: 'البلاطة المصمتة',
+  f: [
+    ['B', 'الطول B (م)'], ['C', 'العرض C (م)'], ['D', 'السماكة (م)'], ['n', 'العدد'],
+    ['V', 'سفلي طولي/م'], ['G', 'قطر السفلي الطولي مم'],
+    ['H', 'سفلي عرضي/م'], ['Gh', 'قطر السفلي العرضي مم'],
+    ['tlr', 'علوي طولي يمين/م'], ['tll', 'علوي طولي يسار/م'],
+    ['twr', 'علوي عرضي يمين/م'], ['twl', 'علوي عرضي يسار/م'],
+    ['dt', 'قطر العلوي مم']
+  ],
+  z: { n: 1, V: 5, G: 10, H: 5, Gh: 10, tlr: 0, tll: 0, twr: 0, twl: 0, dt: 10 }
+};
+NOTE.slab = 'البلاطة المصمتة: تُخصم مساحة الجسور الساقطة تلقائياً. الحديد السفلي يُحسب بكامل البحر مع التراكب، والعلوي عند الركائز (يمين/يسار) يُحسب بطول 0.25 من البحر لكل جهة (اتركه 0 للجهات غير المستمرة).';
+
+// 2. Upgrade Beams (beam & sbeam) to support separate top diameter + shrinkage bars (برندات للجسور العميقة)
+MOD.beam = {
+  t: 'الميدة',
+  f: [
+    ['C', 'العمق م'], ['D', 'العرض م'], ['E', 'الطول م'], ['M', 'خصم تقاطع م'],
+    ['H', 'أسياخ سفلي'], ['F', 'قطر السفلي مم'],
+    ['G', 'أسياخ علوي'], ['Ft', 'قطر العلوي مم'],
+    ['I', 'مكسح / إضافي'], ['shk', 'أسياخ انكماش (برندات)'], ['dshk', 'قطر الانكماش مم'],
+    ['L', 'قطر الكانة مم'], ['J', 'كانات ركائز/م'], ['K', 'كانات وسط/م']
+  ],
+  z: { E: 1, F: 16, Ft: 14, dshk: 10, L: 8, J: 7, K: 5 }
+};
+
+MOD.sbeam = {
+  t: 'الجسور للبلاطات',
+  f: [
+    ['C', 'العمق م (العادية: يشمل البلاطة)'], ['D', 'العرض م'], ['E', 'الطول م'], ['M', 'خصم تقاطع م'],
+    ['H', 'أسياخ سفلي'], ['F', 'قطر السفلي مم'],
+    ['G', 'أسياخ علوي'], ['Ft', 'قطر العلوي مم'],
+    ['I', 'مكسح / إضافي'], ['shk', 'أسياخ انكماش (برندات)'], ['dshk', 'قطر الانكماش مم'],
+    ['L', 'قطر الكانة مم'], ['J', 'كانات ركائز/م'], ['K', 'كانات وسط/م'],
+    ['t', 'سمك البلاطة م (للعادية)'], ['n', 'العدد']
+  ],
+  z: { n: 1, t: 0.2, ty: 'عادية', F: 16, Ft: 14, dshk: 10, L: 8, J: 7, K: 5 },
+  sel: [['ty', 'النوع', () => ['عادية', 'هردي باتجاه واحد', 'هردي باتجاهين']]]
+};
+NOTE.beam = 'يدعم قطراً مستقلاً للحديد العلوي عن السفلي، وحديد الانكماش (البرندات) للجسور العميقة، بالإضافة للأسياخ المكسحة والكانات.';
+NOTE.sbeam = 'جسور البلاطات: نفس دقة الميدة (قطر مستقل للعلوي والسفلي + حديد انكماش). العادية: العمق يشمل سمك البلاطة وتُخصم تلقائياً من البلاطة.';
+
+// Override bmSteel() with separate top diameter + shrinkage bars (backward-compatible if Ft=0)
+bmSteel = function(x) {
+  const Ln = Math.max(0, (+x.E || 0) - (+x.M || 0));
+  const n = +x.n || 1;
+  const dBot = +x.F || 0;
+  const dTop = (+x.Ft > 0) ? +x.Ft : dBot;
+  const dShk = (+x.dshk > 0) ? +x.dshk : 10;
+  const topW = (+x.G || 0) * w(dTop);
+  const botW = (+x.H || 0) * w(dBot);
+  const bentW = (+x.I || 0) * (Ln + 0.828 * (+x.C || 0)) * w(dBot);
+  const shkW = (+x.shk || 0) * Ln * LF() * w(dShk);
+  const stW = 2 * ((+x.D || 0) + (+x.C || 0)) * ((+x.K || 0) * Ln * 0.5 + (+x.J || 0) * Ln * 0.5) * w(+x.L || 0);
+  return n * (Ln * (topW + botW) * LF() + bentW + shkW + stW);
+};
+
+// Update calc() for 'beam' to use the upgraded bmSteel()
+const _v3Calc = calc;
+calc = function(k, x) {
+  if (k === 'beam') {
+    const Ln = Math.max(0, (+x.E || 0) - (+x.M || 0));
+    return { plain: 0, rein: (+x.C || 0) * (+x.D || 0) * Ln, steel: bmSteel(Object.assign({}, x, { n: 1 })) };
+  }
+  return _v3Calc(k, x);
+};
+
+// Override secCalc() to fix Solid Slab steel formula (V*C*B + H*B*C + top support bars 0.25*span)
+const _v3SecCalc = secCalc;
+secCalc = function(kind) {
+  if (kind !== 'slab') return _v3SecCalc(kind);
+  const panels = D.slab || [];
+  const beams = (D.sbeam || []).filter(x => (x.ty || 'عادية') === 'عادية' && x.E !== undefined);
+  const gross = panels.reduce((s, x) => s + (+x.B || 0) * (+x.C || 0) * (+x.n || 1), 0);
+  const foot = beams.reduce((s, x) => s + bmFoot(x), 0);
+  const An = Math.max(0, gross - foot);
+  const f = gross > 0 ? An / gross : 0;
+  const bR = beams.reduce((s, x) => s + bmRein(x), 0);
+  const bS = beams.reduce((s, x) => s + bmSteel(x), 0);
+
+  const rein0 = Math.max(0, panels.reduce((s, x) => s + (+x.B || 0) * (+x.C || 0) * (+x.n || 1) * (+x.D || 0), 0)
+    - beams.reduce((s, x) => s + bmFoot(x) * (+x.t || 0), 0));
+
+  const steel0 = panels.reduce((s, x) => {
+    const B = +x.B || 0, C = +x.C || 0, n = +x.n || 1;
+    const dV = +x.G || 0;
+    const dH = (+x.Gh > 0) ? +x.Gh : dV;
+    const dT = (+x.dt > 0) ? +x.dt : dV;
+    // Bottom mesh (full span with lap factor LF)
+    const botLong  = (+x.V || 0) * C * B * LF() * w(dV);
+    const botTrans = (+x.H || 0) * B * C * LF() * w(dH);
+    // Top support bars (0.25 * span per edge: right & left)
+    const topLong  = ((+x.tlr || 0) + (+x.tll || 0)) * C * (0.25 * B) * w(dT);
+    const topTrans = ((+x.twr || 0) + (+x.twl || 0)) * B * (0.25 * C) * w(dT);
+    return s + (botLong + botTrans + topLong + topTrans) * n;
+  }, 0) * f;
+
+  return { rein: rein0 + bR, steel: steel0 + bS, blk: 0, rein0, steel0, bR, bS };
+};
+/*V4_ACCURACY_UPGRADE_END*/
+
+/*V5_UPGRADES_START*/
+// 1. Ensure 'العدد' (n) exists in ALL modules, especially الميدة (beam), and clarify labels for الأعمدة والرقاب
+if (!MOD.beam.f.some(f => f[0] === 'n')) {
+  MOD.beam.f.splice(3, 0, ['n', 'العدد']);
+  MOD.beam.z.n = 1;
+}
+// Clarify count label in col & neck (E is count)
+MOD.col.f = MOD.col.f.map(f => f[0] === 'E' ? ['E', 'العدد'] : f);
+MOD.neck.f = MOD.neck.f.map(f => f[0] === 'E' ? ['E', 'العدد'] : f);
+
+// Update calc() for beam (multiply by n), kur (gross volume + face area), and jaam (gross volume m³)
+const _v4Calc = calc;
+calc = function(k, x) {
+  if (k === 'beam') {
+    const Ln = Math.max(0, (+x.E || 0) - (+x.M || 0));
+    const n = +x.n || 1;
+    return { plain: 0, rein: (+x.C || 0) * (+x.D || 0) * Ln * n, steel: bmSteel(x) };
+  }
+  if (k === 'kur') {
+    const B = +x.B || 0, C = +x.C || 0, Dd = +x.D || 0, n = +x.n || 1;
+    const st = (x.st !== undefined && x.st !== '') ? +x.st : 0.08;
+    const rp = (x.rp !== undefined && x.rp !== '') ? +x.rp : 70;
+    const faces = +(x.faces || 1);
+    const faceArea = B * Dd * n * faces;
+    const grossVol = B * C * Dd * n;
+    const coreT = Math.max(0, C - st * faces);
+    const coreVol = B * coreT * Dd * n;
+    const jaamVol = coreVol * (rp / 100);
+    const concVol = coreVol * ((100 - rp) / 100);
+    return { plain: 0, rein: 0, steel: 0, kurArea: faceArea, kurVol: grossVol, kur: grossVol, kurJaam: jaamVol, kurConc: concVol };
+  }
+  if (k === 'jaam') {
+    const v = (+x.B || 0) * (+x.C || 0) * (+x.D || 0) * (+x.n || 1);
+    const rp = (x.rp !== undefined && x.rp !== '') ? +x.rp : 70;
+    return { plain: 0, rein: 0, steel: 0, jaamVol: v, jaam: v * rp / 100, jcon: v * (100 - rp) / 100 };
+  }
+  return _v4Calc(k, x);
+};
+
+Object.assign(RL, { kurVol: 'حجم الكرسي م³', kurArea: 'مساحة الكرسي م²', jaamVol: 'حجم الأساس الجعم م³' });
+
+// Clean preview text for kur & jaam (quantities only, no raw material clutter)
+const _v4ResTxt = resTxt;
+resTxt = function(k, x) {
+  if (k === 'kur') {
+    const c = calc('kur', x);
+    return 'مساحة ' + f2(c.kurArea) + ' م² · حجم ' + f3(c.kurVol) + ' م³';
+  }
+  if (k === 'jaam') {
+    const c = calc('jaam', x);
+    return 'حجم الأساس الجعم ' + f3(c.jaamVol) + ' م³';
+  }
+  return _v4ResTxt(k, x);
+};
+
+// 2. Add الكرسي الحجري (kr) and الأساس الجعم (jm) to Backfill Deductions
+Object.assign(DEDL, {
+  kr: 'خصم كمية الكرسي الحجري',
+  jm: 'خصم كمية الأساس الجعم'
+});
+
+const _v4DEDV = DEDV;
+DEDV = function() {
+  const v = _v4DEDV();
+  v.kr = sumK(['kur'], 'kurVol');
+  v.jm = sumK(['jaam'], 'jaamVol');
+  return v;
+};
+
+dedSum = function() {
+  const v = DEDV();
+  return ['fp', 'fr', 'nk', 'bm', 'rp', 'rr', 'kr', 'jm'].reduce((s, k) => s + (D.ded && D.ded[k] ? (v[k] || 0) : 0), 0);
+};
+
+bfHTML = function() {
+  const v = DEDV(), T = totals();
+  const keys = ['fp', 'fr', 'nk', 'bm', 'rp', 'rr', 'kr', 'jm'];
+  const rows = keys.map(k =>
+    `<tr><td class=r>${DEDL[k]}</td><td>${f3(v[k])} م³</td><td><button class=${D.ded[k] ? 'ghost' : 'btn'} data-ded="${k}">${D.ded[k] ? 'إلغاء الخصم' : 'تأكيد الخصم'}</button></td></tr>`
+  ).join('');
+  return `<div class=card>
+    <b>الردم التلقائي (من الحفر)</b>
+    <p class=note>الردم التلقائي = الحفر الكلي − الخصومات المؤكدة (شاملاً خيار خصم الكرسي الحجري والأساس الجعم).</p>
+    <p>الحفر الكلي: <b id=bfExc>${f3(T.exc)}</b> م³ | الردم التلقائي: <b>${f3(T.backAuto)}</b> م³</p>
+    <table><tr><th>الخصم</th><th>القيمة</th><th></th></tr>${rows}</table>
+    <p class=res id=bfRes>إجمالي الردم (تلقائي + إضافي) = ${f3(T.back)} م³</p>
+  </div>
+  <div class=card><b>بنود الردم الإضافي (طول × عرض × ارتفاع)</b>` + listHTML('bf') + `</div>`;
+};
+
+// 3. Update totals() & lines() for kur (m² & m³ only, no materials) and jaam (m³ only)
+const _v4Totals = totals;
+totals = function() {
+  const T = _v4Totals();
+  T.kurArea = sumK(['kur'], 'kurArea');
+  T.kurVol  = sumK(['kur'], 'kurVol');
+  T.jaamVol = sumK(['jaam'], 'jaamVol');
+  return T;
+};
+
+const _v4Lines = lines;
+lines = function(k, T) {
+  if (k === 'kur') {
+    const o = [];
+    if (T.kurArea > 0) o.push({ l: 'كرسي حجري (مساحة)', u: 'م²', q: T.kurArea, key: MOD.kur.t + ' | كرسي حجري (مساحة)' });
+    if (T.kurVol > 0)  o.push({ l: 'كرسي حجري (حجم)', u: 'م³', q: T.kurVol,  key: MOD.kur.t + ' | كرسي حجري (حجم)' });
+    return o;
+  }
+  if (k === 'jaam') {
+    const o = [];
+    if (T.jaamVol > 0) o.push({ l: 'الأساس الجعم', u: 'م³', q: T.jaamVol, key: MOD.jaam.t + ' | الأساس الجعم' });
+    return o;
+  }
+  return _v4Lines(k, T);
+};
+
+// Prevent double-counting on kur: price 'كرسي حجري (حجم)' in m³ (includes facing + core) and mark 'كرسي حجري (مساحة)' as informational
+const _v4IsInfoLine = isInfoLine;
+isInfoLine = function(x) {
+  const l = x.l || '';
+  if (l.includes('كرسي حجري (مساحة)')) return true;
+  return _v4IsInfoLine(x);
+};
+
+// Price Analysis recipes for the new consolidated m³ items (كرسي حجري حجم م³ & الأساس الجعم م³)
+const _v4DefaultRecipe = paDefaultRecipe;
+paDefaultRecipe = function(line) {
+  const l = line.l || '', ps = D.paSet;
+  if (l.includes('كرسي حجري (حجم)')) {
+    return { mix: null, resources: [
+      { code: 'M-050', norm: 16.0, mixRole: null },
+      { code: 'M-046', norm: 0.60, mixRole: null },
+      { code: ps.cement, norm: 1.50, mixRole: null },
+      { code: ps.sand, norm: 0.15, mixRole: null },
+      { code: ps.agg, norm: 0.20, mixRole: null },
+      { code: 'L-020', norm: 1.0, mixRole: null }
+    ]};
+  }
+  if (l.includes('الأساس الجعم')) {
+    return { mix: null, resources: [
+      { code: 'M-046', norm: 0.70, mixRole: null },
+      { code: ps.cement, norm: 1.50, mixRole: null },
+      { code: ps.sand, norm: 0.12, mixRole: null },
+      { code: ps.agg, norm: 0.24, mixRole: null },
+      { code: 'L-020', norm: 1.0, mixRole: null }
+    ]};
+  }
+  return _v4DefaultRecipe(line);
+};
+/*V5_UPGRADES_END*/
+
+/*V6_SMART_ENGINEERING_OFFLINE_START*/
+// =========================================================================
+// 1. SMART ENGINEERING AUDITOR (المدقق الهندسي الذكي - أوفلاين 100%)
+// =========================================================================
+function smartAudit() {
+  ensurePA();
+  const T = totals(), alerts = [], W = 1 + (S.wst ?? 2.5) / 100;
+  const add = (lvl, title, msg) => alerts.push({ lvl, title, msg });
+
+  // A) Check incomplete / zero-dimension items
+  let inc = 0;
+  MODS.forEach(k => (D[k] || []).forEach(x => {
+    if (!Object.values(calc(k, x)).some(v => v > 0)) inc++;
+  }));
+  if (inc > 0) add('warn', 'بنود ناقصة الأبعاد', `يوجد ${inc} بند بأبعاد غير مكتملة (نتيجتها صفر). راجع البنود المدخلة.`);
+
+  // B) Per-element steel ratio & structural dimension checks
+  const checkSteelItem = (k, label, minKg, maxKg) => {
+    (D[k] || []).forEach((x, i) => {
+      const c = calc(k, x);
+      const nm = x.name || (AUTO_SYM[k] + (i + 1));
+      if (c.rein > 0 && c.steel > 0) {
+        const kgm3 = (c.steel * W * 1000) / c.rein;
+        if (kgm3 > maxKg) add('bad', `نسبة حديد مرتفعة في ${label} (${nm})`, `وصلت إلى ${f0(kgm3)} كجم/م³ (المعتاد ${minKg}–${maxKg} كجم/م³) — راجع عدد الأسياخ أو القطر.`);
+        else if (kgm3 < minKg) add('warn', `نسبة حديد منخفضة في ${label} (${nm})`, `تساوي ${f0(kgm3)} كجم/م³ (المعتاد ${minKg}–${maxKg} كجم/م³) — تأكد من إدخال التسليح الكامل.`);
+      }
+      if (k === 'foot' && (+x.D > 0 && +x.D < 0.25)) add('warn', `سماكة قاعدة قليلة (${nm})`, `سماكة القاعدة ${x.D} م أقل من 25 سم المعتادة للقواعد المسلحة.`);
+      if ((k === 'col' || k === 'neck') && ((+x.B > 0 && +x.B < 0.20) || (+x.C > 0 && +x.C < 0.20))) add('warn', `بُعد عمود صغير (${nm})`, `أحد أبعاد القطاع أقل من 20 سم — راجع المخطط الإنشائي.`);
+    });
+  };
+  checkSteelItem('foot', 'القواعد المفردة', 45, 140);
+  checkSteelItem('sfoot', 'القواعد المشتركة', 60, 160);
+  checkSteelItem('col', 'الأعمدة', 70, 220);
+  checkSteelItem('neck', 'الرقاب', 70, 220);
+  checkSteelItem('beam', 'الميدة', 60, 180);
+  checkSteelItem('sbeam', 'جسور البلاطات', 65, 190);
+
+  // Slab overall steel check
+  if (T.slab && T.slab.rein0 > 0 && T.slab.steel0 > 0) {
+    const skg = (T.slab.steel0 * W * 1000) / T.slab.rein0;
+    if (skg > 170) add('bad', 'نسبة حديد البلاطة المصمتة مرتفعة', `تساوي ${f0(skg)} كجم/م³ (المعتاد 60–150 كجم/م³).`);
+    else if (skg < 50) add('warn', 'نسبة حديد البلاطة المصمتة منخفضة', `تساوي ${f0(skg)} كجم/م³ — راجع عدد الأسياخ/م والحديد العلوي.`);
+  }
+
+  // C) Smart Backfill Deduction Reminders
+  if (T.exc > 0) {
+    if (T.kurVol > 0 && !D.ded.kr) add('warn', 'خصم الكرسي الحجري غير مفعّل في الردم', `أدخلت كرسياً حجرياً بحجم ${f2(T.kurVol)} م³ ولم تفعّل خصمه من الردم التلقائي.`);
+    if (T.jaamVol > 0 && !D.ded.jm) add('warn', 'خصم الأساس الجعم غير مفعّل في الردم', `أدخلت أساساً جعماً بحجم ${f2(T.jaamVol)} م³ ولم تفعّل خصمه من الردم التلقائي.`);
+    if (sumK(['foot', 'sfoot'], 'rein') > 0 && !D.ded.fr) add('warn', 'خصم القواعد المسلحة غير مفعّل في الردم', 'أدخلت قواعد مسلحة ولم تفعّل خصمها من الردم في تبويب «الردم».');
+    if (sumK(['neck'], 'rein') > 0 && !D.ded.nk) add('warn', 'خصم الرقاب غير مفعّل في الردم', 'أدخلت رقاب أعمدة ولم تفعّل خصمها من الردم.');
+  }
+
+  // D) Room height & openings check
+  (D.rm || []).forEach((x, i) => {
+    if (+x.H > 0 && (+x.H < 2.2 || +x.H > 5.0)) {
+      add('warn', `ارتفاع غير معتاد في (${x.name || 'غرفة ' + (i + 1)})`, `الارتفاع المسجل ${x.H} م (المعتاد 2.7–3.6 م).`);
+    }
+  });
+  if ((D.op || []).length > 0 && (D.ext || []).length > 0 && !D.extWin) {
+    add('warn', 'خصم النوافذ من التشطيبات الخارجية', 'أدخلت نوافذ في بند الفتحات لكنك لم تفعّل خصمها من التلابيس والدهانات الخارجية.');
+  }
+
+  // E) Unit-Price Market Sanity Checks (in base SAR)
+  const priced = boq().filter(r => r.t === 'line' && !r.infoOnly);
+  const rate = +D.paSet.rate || 1;
+  priced.forEach(ln => {
+    const upSar = ln.p / rate;
+    const l = ln.l || '';
+    if (l.includes('جدران بلك') && (upSar > 95 || upSar < 25)) {
+      add('warn', `سعر غير معتاد: ${l}`, `السعر المحسوب ${f2(upSar)} ر.س/م² (المعتاد 40–80 ر.س/م²) — راجع سعر البلك أو معدل الاستهلاك.`);
+    } else if (l.includes('خرسانة مسلحة') && (upSar > 1400 || upSar < 350)) {
+      add('warn', `سعر غير معتاد: ${l}`, `السعر المحسوب ${f2(upSar)} ر.س/م³ (المعتاد 550–1150 ر.س/م³ شامل الحديد) — راجع نسبة الحديد أو الأسعار.`);
+    } else if (l.includes('تلابيس') && (upSar > 45 || upSar < 10)) {
+      add('warn', `سعر غير معتاد: ${l}`, `السعر المحسوب ${f2(upSar)} ر.س/م² (المعتاد 15–35 ر.س/م²).`);
+    }
+  });
+
+  if (!alerts.length) {
+    add('ok', 'فحص التكامل الهندسي سليم 100%', 'جميع نسب الحديد، الخصومات، الأبعاد، وأسعار الوحدات ضمن النطاق الهندسي والسوقي المعتاد.');
+  }
+  return alerts;
+}
+
+// Upgrade existing checksHTML in الخلاصة to use smartAudit()
+checksHTML = function(T) {
+  return smartAudit().map(a =>
+    `<div class="aud-item ${a.lvl}"><b>${a.lvl === 'ok' ? '✔' : (a.lvl === 'bad' ? '⛔' : '⚠')} ${esc(a.title)}:</b> ${esc(a.msg)}</div>`
+  ).join('');
+};
+
+// =========================================================================
+// 2. WHAT-IF SCENARIO COMPARATOR (مقارن البدائل والسيناريوهات - أوفلاين)
+// =========================================================================
+let SIM_CFG = { wastage: null, overhead: null, profit: null };
+
+function evalScenario(mode, customPcts) {
+  ensurePA();
+  const ps = D.paSet;
+  const priced = boq().filter(r => r.t === 'line' && !r.infoOnly);
+  const wPct = customPcts ? customPcts.wastage : (+ps.wastage || 0);
+  const oPct = customPcts ? customPcts.overhead : (+ps.overhead || 0);
+  const pPct = customPcts ? customPcts.profit : (+ps.profit || 0);
+  const mult = 1 + (wPct + oPct + pPct) / 100;
+  const rate = +ps.rate || 1;
+  let totalDirect = 0;
+
+  priced.forEach(ln => {
+    const rec = clone(paGetRecipe(ln));
+    const mixObj = rec.mix ? paMix(rec.mix) : null;
+    const isConc = (ln.l || '').includes('خرسانة') || (ln.l || '').includes('صبة أرضيات');
+
+    if (mode === 'readymix' && isConc) {
+      // Replace site-mixed cement/sand/agg/water + pour labor with central batching concrete
+      const rmCode = (rec.mix === '8 أكياس' || rec.mix === '1:1.5:3') ? 'M-018' : ((rec.mix === '5 أكياس' || rec.mix === '6 أكياس' || rec.mix === '1:2:4') ? 'M-016' : 'M-017');
+      rec.resources = rec.resources.filter(r => !r.mixRole && !['M-015', 'L-005', 'L-009', 'L-012', 'L-016'].includes(r.code));
+      rec.resources.unshift({ code: rmCode, norm: 1.0, mixRole: null });
+    } else if (mode === 'saudi_steel') {
+      rec.resources.forEach(r => { if (['M-010', 'M-011', 'M-013'].includes(r.code)) r.code = 'M-012'; });
+    } else if (mode === 'econ_steel') {
+      rec.resources.forEach(r => { if (['M-010', 'M-012', 'M-013'].includes(r.code)) r.code = 'M-011'; });
+    } else if (mode === 'hadramout_cem') {
+      rec.resources.forEach(r => { if (['M-001', 'M-003'].includes(r.code)) r.code = 'M-002'; });
+    }
+
+    let directU = 0;
+    rec.resources.forEach(r => {
+      const info = paResInfo(r.code);
+      let norm = (r.mixRole && mixObj) ? (+mixObj[r.mixRole] || 0) : (+r.norm || 0);
+      if (r.autoSteel) norm = actualSteelRatio(ln);
+      directU += norm * info.price;
+    });
+    totalDirect += directU * ln.q * rate;
+  });
+
+  return { direct: totalDirect, final: totalDirect * mult };
+}
+
+function applyScenario(mode) {
+  ensurePA();
+  if (mode === 'saudi_steel') {
+    D.paSet.steel = 'M-012'; D.pa = {}; save(); render(); toast('تم تطبيق سيناريو: حديد سعودي جريد 60');
+  } else if (mode === 'econ_steel') {
+    D.paSet.steel = 'M-011'; D.pa = {}; save(); render(); toast('تم تطبيق سيناريو: حديد تركي جريد 40');
+  } else if (mode === 'hadramout_cem') {
+    D.paSet.cement = 'M-002'; D.pa = {}; save(); render(); toast('تم تطبيق سيناريو: إسمنت حضرموت');
+  } else if (mode === 'readymix') {
+    const priced = boq().filter(r => r.t === 'line' && !r.infoOnly);
+    priced.forEach(ln => {
+      if ((ln.l || '').includes('خرسانة') || (ln.l || '').includes('صبة أرضيات')) {
+        const rec = paGetRecipe(ln);
+        const rmCode = (rec.mix === '8 أكياس' || rec.mix === '1:1.5:3') ? 'M-018' : ((rec.mix === '5 أكياس' || rec.mix === '6 أكياس' || rec.mix === '1:2:4') ? 'M-016' : 'M-017');
+        rec.resources = rec.resources.filter(r => !r.mixRole && !['M-015', 'L-005', 'L-009', 'L-012', 'L-016'].includes(r.code));
+        rec.resources.unshift({ code: rmCode, norm: 1.0, mixRole: null });
+      }
+    });
+    save(); render(); toast('تم تحويل بنود الخرسانة إلى: خرسانة جاهزة (خلاطة مركزية)');
+  }
+}
+
+// =========================================================================
+// 3. SMART QUICK INPUT (TEXT / VOICE PARSER - الإدخال السريع الذكي)
+// =========================================================================
+function normArabicDigits(str) {
+  return String(str || '')
+    .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
+    .replace(/،/g, ' ')
+    .replace(/[×xX*]/g, ' ');
+}
+
+function parseSmartCommand(rawText) {
+  const txt = normArabicDigits(rawText).trim();
+  if (!txt) return { err: 'اكتب أو أملِ جملة الأمر أولاً (مثال: قواعد F1 1.8 1.8 0.5 عدد 8)' };
+
+  // Detect target module
+  const rules = [
+    { k: 'sfoot', kw: ['مشتركة', 'مشتركه', 'سفوت', 'cf'] },
+    { k: 'foot',  kw: ['قواعد', 'قاعدة', 'قاعده', 'f'] },
+    { k: 'sh',    kw: ['شداد', 'شدادات', 'tb'] },
+    { k: 'raft',  kw: ['حصيرة', 'حصيره', 'لبشة', 'لبشه', 'rf'] },
+    { k: 'neck',  kw: ['رقاب', 'رقبة', 'رقبه'] },
+    { k: 'col',   kw: ['أعمدة', 'اعمده', 'عمود', 'أعمده'] },
+    { k: 'sbeam', kw: ['جسر سقف', 'جسور سقف', 'جسر بلاطة', 'جسور البلاطات', 'كمرة', 'كمرات'] },
+    { k: 'beam',  kw: ['ميدة', 'ميده', 'ميدات', 'جسور أرضية', 'gb'] },
+    { k: 'rib2',  kw: ['هوردي اتجاهين', 'هردي اتجاهين', 'هوردي باتجاهين'] },
+    { k: 'rib',   kw: ['هوردي', 'هردي', 'أعصاب', 'اعصاب'] },
+    { k: 'slab',  kw: ['بلاطة', 'بلاطه', 'سقف', 'بلاطات'] },
+    { k: 'exc',   kw: ['حفر', 'حفريات'] },
+    { k: 'bf',    kw: ['ردم', 'دفان', 'دفن'] },
+    { k: 'kur',   kw: ['كرسي', 'الكرسي'] },
+    { k: 'jaam',  kw: ['جعم', 'الأساس الجعم', 'اساس جعم'] },
+    { k: 'stwall',kw: ['بناء حجر', 'جدار حجر', 'حجر'] },
+    { k: 'wall',  kw: ['بلك', 'بلوك', 'جدار', 'مباني'] },
+    { k: 'rm',    kw: ['غرفة', 'غرفه', 'صالة', 'صاله', 'مطبخ', 'حمام', 'مجلس', 'ممر', 'مكتب', 'مخزن'] },
+    { k: 'op',    kw: ['نافذة', 'نافذه', 'شباك', 'باب', 'أبواب', 'ابواب'] },
+  ];
+
+  const lower = txt.toLowerCase();
+  let mod = null;
+  for (const r of rules) {
+    if (r.kw.some(w => lower.includes(w))) { mod = r.k; break; }
+  }
+  // Fallback: if currently inside a module in items view, use it
+  if (!mod && CUR.v === 'items' && CUR.s && MOD[CUR.s] && MOD[CUR.s].f.length) mod = CUR.s;
+  if (!mod) return { err: 'لم أتعرف على نوع البند. ابدأ بكلمة مثل: قواعد، أعمدة، رقاب، ميدة، بلاطة، حفر، ردم، كرسي، جعم، بلك، غرفة، صالة.' };
+
+  // Extract explicit count after "عدد" or "العدد" or "x"
+  let count = null;
+  let clean = txt.replace(/(?:العدد|عدد)\s*[:=]?\s*(\d+(?:\.\d+)?)/g, (_, n) => { count = parseFloat(n); return ' '; });
+
+  // Extract symbol/name like F1, C2, GB1, غرفة 1
+  let customName = null;
+  const symMatch = clean.match(/\b([A-Za-z]{1,3}\d+)\b/);
+  if (symMatch) {
+    customName = symMatch[1].toUpperCase();
+    clean = clean.replace(symMatch[0], ' ');
+  } else if (mod === 'rm') {
+    const rmWord = ['غرفة','غرفه','صالة','صاله','مطبخ','حمام','مجلس','ممر','مكتب','مخزن'].find(w => clean.includes(w));
+    if (rmWord) customName = nextAutoName('rm', rmWord.replace('ه', 'ة') + ' ');
+  }
+
+  // Extract remaining numbers in order
+  const nums = (clean.match(/\d+(?:\.\d+)?/g) || []).map(Number);
+  if (nums.length < 2) return { err: 'يرجى ذكر الأبعاد الرقمية (مثلاً: 1.8 1.8 0.5 عدد 8).' };
+
+  const item = newItem(mod);
+  item.name = customName || nextAutoName(mod);
+
+  if (['foot', 'sfoot', 'sh', 'raft', 'col', 'neck', 'exc', 'bf', 'kur', 'jaam', 'slab', 'rib', 'rib2'].includes(mod)) {
+    item.B = nums[0] || 0;
+    item.C = nums[1] || 0;
+    item.D = nums[2] || 0;
+    const cntVal = count !== null ? count : (nums[3] !== undefined ? nums[3] : 1);
+    if (mod === 'foot') { item.J = cntVal; if (!item.E) item.E = 6; if (!item.F) item.F = 6; if (!item.I) item.I = 14; }
+    else if (mod === 'col' || mod === 'neck') { item.E = cntVal; if (!item.G) item.G = 6; if (!item.H) item.H = 16; if (!item.I) item.I = 6; if (!item.J) item.J = 8; if (!item.F) item.F = 0.8; }
+    else { item.n = cntVal; }
+  } else if (mod === 'beam' || mod === 'sbeam') {
+    // Support either (L, b, h) or (h, b, L): largest number is length E
+    const d3 = [nums[0] || 0, nums[1] || 0, nums[2] || 0];
+    const maxV = Math.max(...d3);
+    if (d3[0] === maxV && maxV > 1.5) { item.E = d3[0]; item.D = d3[1]; item.C = d3[2]; }
+    else { item.C = d3[0]; item.D = d3[1]; item.E = d3[2]; }
+    item.n = count !== null ? count : (nums[3] || 1);
+    if (!item.G) item.G = 2; if (!item.H) item.H = 3;
+  } else if (mod === 'wall' || mod === 'stwall') {
+    item.L = nums[0] || 0; item.H = nums[1] || 0;
+    if (mod === 'stwall' && nums[2]) item.T = nums[2];
+    item.n = count !== null ? count : 1;
+  } else if (mod === 'rm') {
+    item.L = nums[0] || 0; item.W = nums[1] || 0; item.H = nums[2] || 3.0;
+    item.n = count !== null ? count : 1;
+    // Enable common interior finishes by default for quick rooms
+    item.pw = true; item.pc = true; item.pdw = true; item.pdc = true; item.tf = true; item.sk = true;
+  } else if (mod === 'op') {
+    item.ty = lower.includes('باب') ? 'باب' : 'نافذة';
+    item.W = nums[0] || 0; item.H = nums[1] || 0;
+    item.n = count !== null ? count : (nums[2] || 1);
+  }
+
+  return { mod, item };
+}
+
+function quickInputBoxHTML() {
+  return `<div class=ai-box>
+    <div class=tools style="justify-content:space-between;margin-top:0;margin-bottom:6px">
+      <b>⚡ الإدخال السريع الذكي (نصي أو صوتي)</b>
+      <span class=tag>يعمل أوفلاين</span>
+    </div>
+    <div class=ai-row>
+      <input id="smartCmdInput" placeholder="مثال: قواعد F1 1.8 1.8 0.5 عدد 8  أو  غرفة 4.5 4 3.2 عدد 2">
+      <button type="button" class=ai-mic id="smartMicBtn" title="إملاء صوتي">🎤</button>
+      <button type="button" class=btn id="smartRunBtn">ترحيل فوري</button>
+    </div>
+    <small style="color:var(--mut);display:block;margin-top:5px">اكتب البند وأبعاده بجملة واحدة أو استخدم ميكروفون لوحة المفاتيح، وسيُضاف مباشرة لبنده الصحيح.</small>
+  </div>`;
+}
+
+// =========================================================================
+// 4. SMART ENGINEERING TAB (تبويب الذكاء الهندسي المدمج)
+// =========================================================================
+function smartHTML() {
+  ensurePA();
+  const ps = D.paSet, cur = esc(ps.cur || 'ر.س');
+  if (SIM_CFG.wastage === null) { SIM_CFG.wastage = +ps.wastage; SIM_CFG.overhead = +ps.overhead; SIM_CFG.profit = +ps.profit; }
+
+  const audits = smartAudit();
+  const base = evalScenario('base');
+  const scenarios = [
+    { id: 'readymix',      title: 'خرسانة جاهزة (خلاطة مركزية)', desc: 'استبدال الصب اليدوي بالخرسانة الجاهزة في كل بنود الخرسانة', res: evalScenario('readymix') },
+    { id: 'saudi_steel',   title: 'حديد سعودي جريد 60 (سابك/الراجحي)', desc: 'ترقية تسليح المشروع للحديد السعودي جريد 60', res: evalScenario('saudi_steel') },
+    { id: 'econ_steel',    title: 'حديد تركي جريد 40 (خيار اقتصادي)', desc: 'احتساب التكلفة باستخدام حديد تركي جريد 40', res: evalScenario('econ_steel') },
+    { id: 'hadramout_cem', title: 'إسمنت حضرموت (بديل محلي)', desc: 'استبدال الإسمنت الحالي بإسمنت حضرموت في جميع البنود', res: evalScenario('hadramout_cem') },
+  ];
+  const simRes = evalScenario('base', SIM_CFG);
+  const simDiff = simRes.final - base.final;
+
+  let h = quickInputBoxHTML();
+
+  // Auditor Card
+  h += `<div class=card>
+    <b>1. المدقق الهندسي الذكي (${audits.length} فحص)</b>
+    <p class=note>يفحص نسب الحديد لكل عنصر على حدة، وخصومات الردم، والأبعاد الهندسية، وأسعار الوحدات مقارنة بمتوسط السوق.</p>
+    ${audits.map(a => `<div class="aud-item ${a.lvl}"><b>${a.lvl === 'ok' ? '✔' : (a.lvl === 'bad' ? '⛔' : '⚠')} ${esc(a.title)}:</b> ${esc(a.msg)}</div>`).join('')}
+  </div>`;
+
+  // What-If Comparator Card
+  h += `<div class=card>
+    <b>2. مقارن البدائل والسيناريوهات (What-If)</b>
+    <p class=note>التكلفة النهائية الحالية للمشروع: <b>${f0(base.final)} ${cur}</b> (مباشر: ${f0(base.direct)} ${cur}). قارن البدائل بضغطة زر قبل تقديم العرض:</p>
+    <div style="overflow-x:auto"><table>
+      <tr><th class=r>السيناريو البديل</th><th>الإجمالي النهائي</th><th>الفارق</th><th>إجراء</th></tr>
+      ${scenarios.map(sc => {
+        const diff = sc.res.final - base.final;
+        const pct = base.final > 0 ? (diff / base.final) * 100 : 0;
+        const cls = diff > 0 ? 'sc-diff-pos' : (diff < 0 ? 'sc-diff-neg' : '');
+        const sign = diff > 0 ? '+' : '';
+        return `<tr>
+          <td class=r><b>${sc.title}</b><br><small style="color:var(--mut)">${sc.desc}</small></td>
+          <td><b>${f0(sc.res.final)} ${cur}</b></td>
+          <td class="${cls}">${sign}${f0(diff)} ${cur}<br><small>(${sign}${f2(pct)}%)</small></td>
+          <td><button class=ghost style="padding:5px 9px;font-size:12px" data-apply-sc="${sc.id}">اعتماد</button></td>
+        </tr>`;
+      }).join('')}
+    </table></div>
+  </div>`;
+
+  // Interactive Markup Simulator Card
+  h += `<div class=card>
+    <b>3. محاكي النسب المالية الفوري (الهدر / الإشراف / الأرباح)</b>
+    <div class=grid>
+      <label>نسبة الهدر %<input type=number step=0.5 data-sim="wastage" value="${SIM_CFG.wastage}"></label>
+      <label>الإشراف والإدارية %<input type=number step=0.5 data-sim="overhead" value="${SIM_CFG.overhead}"></label>
+      <label>نسبة الأرباح %<input type=number step=0.5 data-sim="profit" value="${SIM_CFG.profit}"></label>
+    </div>
+    <p class=res>إجمالي المحاكاة: <b>${f0(simRes.final)} ${cur}</b> &nbsp;|&nbsp; الفارق عن الوضع الحالي: <span class="${simDiff > 0 ? 'sc-diff-pos' : 'sc-diff-neg'}">${simDiff > 0 ? '+' : ''}${f0(simDiff)} ${cur}</span></p>
+    <div class=tools style="margin-bottom:0">
+      <button class=btn data-apply-sim=1>اعتماد نسب المحاكاة للمشروع</button>
+    </div>
+  </div>`;
+
+  return h;
+}
+
+// Add 'الذكاء الهندسي' tab to project navigation & inject Quick Input into itemsHTML
+const _v5Nav = nav;
+nav = function() {
+  let T = [];
+  if (CUR.v === 'home') { $('#nav').innerHTML = ''; return; }
+  if (['proj', 'items', 'pa', 'smart', 'sum'].includes(CUR.v))
+    T = [['home', 'الرئيسية'], ['proj', 'المشروع']].concat(CUR.started ? [['items', 'البنود'], ['pa', 'تحليل الأسعار'], ['smart', 'الذكاء الهندسي'], ['sum', 'الخلاصة']] : []);
+  else
+    T = [['home', 'الرئيسية'], ['drafts', 'المسودات'], ['prices', 'أسعار المواد والعمالة'], ['set', 'الإعدادات']];
+  $('#nav').innerHTML = T.map(([k, t]) => `<button data-tab="${k}" class="${k === CUR.v ? 'on' : ''}">${t}</button>`).join('');
+};
+
+const _v5ItemsHTML = itemsHTML;
+itemsHTML = function() {
+  return quickInputBoxHTML() + _v5ItemsHTML();
+};
+
+render = function() {
+  ensurePA();
+  nav();
+  const V = { home: homeHTML, drafts: draftsHTML, set: setHTML, proj: projHTML, items: itemsHTML, pa: paHTML, smart: smartHTML, sum: sumHTML };
+  $('#main').innerHTML = V[CUR.v]();
+  updRes();
+  updPx();
+};
+
+// Event Handlers for Smart Quick Input, Voice Mic, and Scenarios
+let _recog = null;
+document.body.addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t) return;
+
+  if (t.id === 'smartRunBtn') {
+    const inp = $('#smartCmdInput');
+    const parsed = parseSmartCommand(inp ? inp.value : '');
+    if (parsed.err) { toast(parsed.err); return; }
+    D[parsed.mod].push(parsed.item);
+    resetDraft(parsed.mod);
+    save();
+    if (inp) inp.value = '';
+    render();
+    toast(`تمت إضافة ${parsed.item.name} في «${MOD[parsed.mod].t}»`);
+    return;
+  }
+
+  if (t.id === 'smartMicBtn') {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { toast('استخدم زر الميكروفون في لوحة مفاتيح الجوال للإملاء الصوتي'); return; }
+    if (_recog) { try { _recog.stop(); } catch (err) {} _recog = null; t.classList.remove('rec'); return; }
+    _recog = new SR();
+    _recog.lang = 'ar-SA';
+    _recog.interimResults = false;
+    t.classList.add('rec');
+    toast('تحدث الآن... (مثال: قواعد F1 1.8 1.8 0.5 عدد 8)');
+    _recog.onresult = ev => {
+      const spoken = ev.results[0][0].transcript;
+      const inp = $('#smartCmdInput');
+      if (inp) inp.value = spoken;
+      t.classList.remove('rec'); _recog = null;
+    };
+    _recog.onerror = () => { t.classList.remove('rec'); _recog = null; toast('تعذّر الالتقاط الصوتي — يمكنك استخدام ميكروفون الكيبورد'); };
+    _recog.onend = () => { t.classList.remove('rec'); _recog = null; };
+    _recog.start();
+    return;
+  }
+
+  if (t.dataset.applySc) {
+    if (confirm('تطبيق هذا السيناريو على تحليل أسعار المشروع الحالي؟')) applyScenario(t.dataset.applySc);
+    return;
+  }
+
+  if (t.dataset.applySim) {
+    D.paSet.wastage = +SIM_CFG.wastage || 0;
+    D.paSet.overhead = +SIM_CFG.overhead || 0;
+    D.paSet.profit = +SIM_CFG.profit || 0;
+    save(); render(); toast('تم اعتماد نسب المحاكاة للمشروع');
+    return;
+  }
+});
+
+document.body.addEventListener('input', e => {
+  const t = e.target;
+  if (t.dataset.sim) {
+    SIM_CFG[t.dataset.sim] = num(t.value);
+    if (CUR.v === 'smart') render();
+    return;
+  }
+});
+/*V6_SMART_ENGINEERING_OFFLINE_END*/
+
+
+
+
 restore();initCloud();render();
 window.addEventListener('online',()=>{if(CLOUD_USER)syncCloud(true)});
 if('serviceWorker' in navigator&&location.protocol==='https:'){navigator.serviceWorker.register('sw.js').catch(()=>{})}
